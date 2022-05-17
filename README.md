@@ -4,6 +4,8 @@
 
 ## RUNNING THE PROGRAMS
 
+the root program will need to be installed in order to run these commands. [Here](https://root.cern/install/) is the install page.
+
 ### MACROS
 
 From the command line:
