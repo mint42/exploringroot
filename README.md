@@ -8,15 +8,15 @@
 
 From the command line:
 
-'''
+```
 root FILENAME.C
-'''
+```
 
 From the interactive shell:
 
-'''
+```
 root [0] .x FILENAME.C
-'''
+```
 
 ## OVERVIEW
 
