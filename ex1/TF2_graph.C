@@ -11,7 +11,7 @@
  * 	- "surf1" lets the function look 3-D
  */
 
-void xyz_graph_root() {
+void TF2_graph() {
 	TF2 *f = new TF2("f", "(sin(x)*sin(y))/(x*y)", -10, 10, -10, 10);
 	f->Draw("surf1");
 }

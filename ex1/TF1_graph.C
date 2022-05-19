@@ -7,7 +7,7 @@
  * 	
  */
 
-void xy_graph_root() {
+void TF1_graph() {
 	TF1 *f = new TF1("f", "sin(x)/x", 0, 10);
 	f->Draw();
 }
