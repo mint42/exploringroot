@@ -22,9 +22,9 @@ root [0] .x FILENAME.C
 
 ## OVERVIEW
 
-[ex1](./ex1): ROOT macros to use the TF1 and TF2 function classes
+[ex1](./ex1): ROOT macros. Use the TF1 and TF2 classes to draw some sine functions
 
-[ex2](./ex2): ROOT macro to draw histograms
+[ex2](./ex2): ROOT macro. Uses the THD1 class to create a histogram from some random data points centered around a bell curve
 
 ## REFERENCES
 
