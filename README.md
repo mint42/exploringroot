@@ -4,7 +4,7 @@
 
 ## RUNNING THE PROGRAMS
 
-the root program will need to be installed in order to run these commands. [Here](https://root.cern/install/) is the install page.
+The root program will need to be installed in order to run these commands. [Here](https://root.cern/install/) is the install page.
 
 ### MACROS
 
@@ -22,6 +22,16 @@ root [0] .x FILENAME.C
 
 ## OVERVIEW
 
-[ex1](./ex1): ROOT macro to draw a 1 parameter function f(x)
+[ex1](./ex1): ROOT macros to use the TF1 and TF2 function classes
 
-[ex2](./ex2): ROOT macro to draw a 2 parameter function f(x,y)
+[ex2](./ex2): ROOT macro to draw histograms
+
+## REFERENCES
+
+[Root Reference Guide](https://root.cern/doc/master/index.html)
+
+[Root Workshop Tutorial](https://inpp.ohio.edu/~rochej/group_page/tips/RootClass2020_seligman_columbia_edu.pdf)
+
+## AUTHOR
+
+Riley Reedy
