@@ -24,7 +24,7 @@ root [0] .x FILENAME.C
 
 [ex1](./ex1): ROOT macros. Use the TF1 and TF2 classes to draw some sine functions
 
-[ex2](./ex2): ROOT macro. Uses the THD1 class to create a histogram from some random data points centered around a bell curve
+[ex2](./ex2): ROOT macro. Uses the TH1D class to create a histogram from some random data points centered around a bell curve
 
 ## REFERENCES
 
