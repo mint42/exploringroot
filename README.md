@@ -20,6 +20,8 @@ From the interactive shell:
 root [0] .x FILENAME.C
 ```
 
+Make sure to run the commands from inside the appropriate project foler so that there are no path resolving errors.
+
 ## OVERVIEW
 
 [ex1](./ex1): ROOT macros. Use the TF1 and TF2 classes to draw some sine functions
