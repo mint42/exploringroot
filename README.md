@@ -26,6 +26,8 @@ root [0] .x FILENAME.C
 
 [ex2](./ex2): ROOT macro. Uses the TH1D class to create a histogram from some random data points centered around a bell curve
 
+[ex3](./ex3): ROOT macro. Uses the example root file for a fake physics experiment (experiment.root) and calculates the average magnitude from the set of all events.
+
 ## REFERENCES
 
 [Root Reference Guide](https://root.cern/doc/master/index.html)
