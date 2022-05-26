@@ -26,13 +26,17 @@ root [0] .x FILENAME.C
 
 [ex2](./ex2): ROOT macro. Uses the TH1D class to create a histogram from some random data points centered around a bell curve
 
-[ex3](./ex3): ROOT macro. Uses the example root file for a fake physics experiment (experiment.root) and calculates the average magnitude from the set of all events.
+[ex3](./ex3): ROOT macro. Uses TTree class and TTreeReader class to run a calculation on a example root file for a fake collision experiment. It finds the average magnitude of momentum from the set of all events. Credit for the [experiment.root](/ex3/experiment.root) file is in references.
 
 ## REFERENCES
 
-[Root Reference Guide](https://root.cern/doc/master/index.html)
+[Root Reference Guide](https://root.cern/doc/master/index.html): Here you can find a list of all the classes and namespaces in the ROOT framework along with definitions, use cases, examples, and tutorials.
 
-[Root Workshop Tutorial](https://inpp.ohio.edu/~rochej/group_page/tips/RootClass2020_seligman_columbia_edu.pdf)
+[Root Official Guide on Trees](https://root.cern.ch/root/htmldoc/guides/users-guide/Trees.html)
+
+[Root Workshop Tutorial](https://www.nevis.columbia.edu/~seligman/root-class/)
+
+[Bill Seligman's Site](https://www.nevis.columbia.edu/~seligman/): A general thank you to the creator of the Root Tutorial I used in this project. He has provided his entire tutorial and all the example files (prev REF) for free to the public.
 
 ## AUTHOR
 
