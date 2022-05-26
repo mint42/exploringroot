@@ -9,8 +9,6 @@
 */
 
 #include "TFile.h"
-#include "TH1D.h"
-#include "TCanvas.h"
 #include "TMath.h"
 #include "TTreeReader.h"
 #include "TTreeReaderValue.h"
