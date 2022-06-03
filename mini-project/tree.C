@@ -5,6 +5,10 @@
 #include <TCanvas.h>
 #include <vector>
 
+#define MAX_NUM_GRAPHS 9	// number of graphs to be drawn from each category (no pulse, 1 pulse, 2 pulse)
+#define NUM_SIG_POINTS 128	// number of data points saved by the signal array (sig[])
+#define THRESHOLD 50		// minimum sig[] value that could be considered a pulse
+
 /*
  *   In a ROOT session, you can do:
  *      root> .L tree.C
@@ -40,7 +44,7 @@
  * @param: one_pluse_display- type bool value for the one pulse output
  * @param: two_pulse_display- type bool value for the two pulse output
  */
-void	set_display(Int_t &pulse_display, Bool_t &no_pulse_display, Bool_t &one_pulse_display, Bool_t &two_pulse_display);
+static void	set_display(Int_t &pulse_display, Bool_t &no_pulse_display, Bool_t &one_pulse_display, Bool_t &two_pulse_display);
 
 
 void	tree::Loop(Int_t pulse_display = -1)
@@ -48,43 +52,39 @@ void	tree::Loop(Int_t pulse_display = -1)
 	if (fChain == 0)
 		return;
 
-	const Double_t	threshold = 50; //JR I'm adding this is but I am not quite sure what threshold is used for the pulse analysis
-	const Int_t		number_entries = 128;
-
 	// x-coordinates to draw the signal trace
-	const Int_t		x[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127};
+	const Int_t		x[NUM_SIG_POINTS] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127};
 
 	Long64_t		nentries = fChain->GetEntriesFast();
 
 	// counters
-	const	Int_t ngraph = 9;
 	Int_t	noPulse_counter = 0; // counter for no pulse
 	Int_t	onePulse_counter = 0; // counter for one pulse
 	Int_t	twoPulse_counter = 0; // counter for two pulses
 
 	// declaration of multigraph, no pulse plots and offset line 
-	TMultiGraph	*multigraph_nopulse[ngraph];
-	TGraph		*graph_nopulse[ngraph];
-	TGraph		*noPulse_offset_line[ngraph];
+	TMultiGraph	*multigraph_nopulse[MAX_NUM_GRAPHS];
+	TGraph		*graph_nopulse[MAX_NUM_GRAPHS];
+	TGraph		*noPulse_offset_line[MAX_NUM_GRAPHS];
 
 	// declaration of multigraph, one pulse plots, point of pulse and offset line
-	TMultiGraph	*multigraph_onepulse[ngraph];
-	TGraph		*graph_onepulse[ngraph];
-	TGraph		*graph_onepulse_dot[ngraph];
-	TGraph		*onePulse_threshold_line[ngraph];
+	TMultiGraph	*multigraph_onepulse[MAX_NUM_GRAPHS];
+	TGraph		*graph_onepulse[MAX_NUM_GRAPHS];
+	TGraph		*graph_onepulse_dot[MAX_NUM_GRAPHS];
+	TGraph		*onePulse_threshold_line[MAX_NUM_GRAPHS];
 
 	// declaration of multigraph, two pulse plots, points of pulses and offset line 
-	TMultiGraph	*multigraph_twopulse[ngraph];
-	TGraph		*graph_twopulse[ngraph];
-	TGraph		*graph_twopulse_dot1[ngraph];
-	TGraph		*graph_twopulse_dot2[ngraph];
-	TGraph		*twoPulse_offset_line[ngraph];
+	TMultiGraph	*multigraph_twopulse[MAX_NUM_GRAPHS];
+	TGraph		*graph_twopulse[MAX_NUM_GRAPHS];
+	TGraph		*graph_twopulse_dot1[MAX_NUM_GRAPHS];
+	TGraph		*graph_twopulse_dot2[MAX_NUM_GRAPHS];
+	TGraph		*twoPulse_offset_line[MAX_NUM_GRAPHS];
 
 	Bool_t		no_pulse_display = kFALSE; // corresponds to no signal
 	Bool_t		one_pulse_display = kFALSE; // corresponds to 1 signal
 	Bool_t		two_pulse_display = kFALSE; // corresponds to 2 signals
 
-	display(pulse_display, no_pulse_display, one_pulse_display, two_pulse_display);
+	set_display(pulse_display, no_pulse_display, one_pulse_display, two_pulse_display);
 
 	// main loop. this loops over all the events in the tree.
 	for (Long64_t jentry = 0; jentry < nentries; ++jentry)
@@ -94,12 +94,12 @@ void	tree::Loop(Int_t pulse_display = -1)
 		if (jentry < 10)
 			pulseFADC(8,4, 10, 110, 50, 10);
 
-		if (A1 == 0 && noPulse_counter < ngraph && jentry > 1000 && no_pulse_display)
+		if (A1 == 0 && noPulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && no_pulse_display)
 		{	 
 			TString		title_nopulse = Form("Event # %lld", jentry); // title form
 
 			multigraph_nopulse[noPulse_counter] = new TMultiGraph(title_nopulse, title_nopulse); // initialize multigraph
-			graph_nopulse[noPulse_counter] = new TGraph(number_entries, x, sig); // initialize plot of no pulses (y)
+			graph_nopulse[noPulse_counter] = new TGraph(NUM_SIG_POINTS, x, sig); // initialize plot of no pulses (y)
 
 			graph_nopulse[noPulse_counter]->SetLineColor(2);
 			multigraph_nopulse[noPulse_counter] -> Add(graph_nopulse[noPulse_counter]); // addition of plot to multigraph
@@ -116,18 +116,18 @@ void	tree::Loop(Int_t pulse_display = -1)
 			++noPulse_counter;
 		}
 
-		if (onePulse_counter < ngraph && jentry > 1000 && one_pulse_display)
+		if (onePulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && one_pulse_display)
 		{
 			TString		title_onepulse = Form("Event # %lld",jentry); // title form
 
 			multigraph_onepulse[onePulse_counter] = new TMultiGraph(title_onepulse, title_onepulse); // initialize multigraph
 
 			Double_t	plotX[2] = {0.0, 128.0};
-			Double_t	plotY[2] = {-threshold, -threshold}; // y-coordinates to draw the theshold line
+			Double_t	plotY[2] = {-THRESHOLD, -THRESHOLD}; // y-coordinates to draw the theshold line
 
 			onePulse_threshold_line[onePulse_counter] = new TGraph(2, plotX, plotY); 
 
-			graph_onepulse[onePulse_counter] = new TGraph(number_entries, x, sig); // initialize plot of no pulses (y)
+			graph_onepulse[onePulse_counter] = new TGraph(NUM_SIG_POINTS, x, sig); // initialize plot of no pulses (y)
 			graph_onepulse[onePulse_counter]->SetLineColor(2);
 
 			Float_t		*start_array_1_detection = start(sig);
@@ -153,18 +153,18 @@ void	tree::Loop(Int_t pulse_display = -1)
 			}
 		}
 
-		if (twoPulse_counter < ngraph && jentry > 1000 && two_pulse_display)
+		if (twoPulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && two_pulse_display)
 		{
 			TString		title_twopulse = Form("Event # %lld", jentry); // title form
 
 			multigraph_twopulse[twoPulse_counter] = new TMultiGraph(title_twopulse, title_twopulse); // initialize multigraph
 
 			Double_t	plotX[2] = {0.0, 128.0};
-			Double_t	plotY[2] = {-threshold, -threshold};
+			Double_t	plotY[2] = {-THRESHOLD, -THRESHOLD};
 
 			twoPulse_offset_line[twoPulse_counter] = new TGraph(2, plotX, plotY); // initialize new graph for offset line
 
-			graph_twopulse[twoPulse_counter] = new TGraph(number_entries, x, sig); // initialize plot of two pulse (y_2)
+			graph_twopulse[twoPulse_counter] = new TGraph(NUM_SIG_POINTS, x, sig); // initialize plot of two pulse (y_2)
 			graph_twopulse[twoPulse_counter]->SetLineColor(2);
 
 			Float_t		*start_array_2_detections = start(sig);
@@ -205,7 +205,7 @@ void	tree::Loop(Int_t pulse_display = -1)
 		auto multipleNoPulsePlots = new TCanvas("c1", "Entries for No Pulse Plots"); // initialize a new canvas
 		multipleNoPulsePlots->Divide(3, 3); // divide canvas into 3 by 3 sections
 
-		for (Int_t i = 0; i < ngraph; ++i) // as long at i is less than ngraph(9)
+		for (Int_t i = 0; i < MAX_NUM_GRAPHS; ++i) // as long at i is less than MAX_NUM_GRAPHS(9)
 		{
 			multipleNoPulsePlots->cd(i + 1); // on the canvas of multipleNoPulsePlots...
 			multigraph_nopulse[i]->Draw("ACP"); // draw the plot at index i
@@ -218,7 +218,7 @@ void	tree::Loop(Int_t pulse_display = -1)
 		auto multipleOnePulsePlots = new TCanvas("c2", "Entries for One Pulse Plots");
 		multipleOnePulsePlots->Divide(3, 3);
 
-		for (Int_t i = 0; i < ngraph; ++i)
+		for (Int_t i = 0; i < MAX_NUM_GRAPHS; ++i)
 		{
 			multipleOnePulsePlots->cd(i + 1);
 			multigraph_onepulse[i]->Draw("ACP");
@@ -231,7 +231,7 @@ void	tree::Loop(Int_t pulse_display = -1)
 		auto multipleTwoPulsePlots = new TCanvas("c3", "Entries for Two Pulse Plots");
 		multipleTwoPulsePlots->Divide(3, 3);
 
-		for (Int_t i = 0; i < ngraph; ++i)
+		for (Int_t i = 0; i < MAX_NUM_GRAPHS; ++i)
 		{
 			multipleTwoPulsePlots->cd(i + 1);
 			multigraph_twopulse[i]->Draw("ACP");
@@ -277,9 +277,9 @@ Float_t		*tree::start(Int_t sig[])
 	for (Int_t i = 0; i < narray; ++i)
 	{
 
-		if (-sig[i] >= threshold && start_time[npulse] == narray)	     
+		if (-sig[i] >= THRESHOLD && start_time[npulse] == narray)	     
 			start_time[npulse] = i;	
-		if (-sig[i] <= threshold && start_time[npulse] != narray && stop_time[npulse] == 0)
+		if (-sig[i] <= THRESHOLD && start_time[npulse] != narray && stop_time[npulse] == 0)
 		{
 			stop_time[npulse] = i;
 			++npulse;
@@ -306,9 +306,9 @@ Float_t* tree::stop(Int_t sig[])
 
 	for (Int_t i = 0; i < narray; ++i)
 	{
-		if (-sig[i] >= threshold && start_time[npulse] == narray)	     
+		if (-sig[i] >= THRESHOLD && start_time[npulse] == narray)	     
 			start_time[npulse] = i;	
-		if(-sig[i] <= threshold && start_time[npulse] != narray && stop_time[npulse] == 0)
+		if(-sig[i] <= THRESHOLD && start_time[npulse] != narray && stop_time[npulse] == 0)
 		{
 			stop_time[npulse] = i;
 			++npulse;
