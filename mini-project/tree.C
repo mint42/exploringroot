@@ -5,42 +5,43 @@
 #include <TCanvas.h>
 #include <vector>
 
-/**
- * @display - displays the plots given the parameter of the loop function
+/*
+ *   In a ROOT session, you can do:
+ *      root> .L tree.C
+ *      root> tree t
+ *      root> t.GetEntry(12); // Fill t data members with entry number 12
+ *      root> t.Show();       // Show values of entry 12
+ *      root> t.Show(16);     // Read and show values of entry 16
+ *      root> t.Loop();       // Loop on all entries and prints all multigraphs (i.e. no pulse, one pulse, two pulse)
+ *      root> t.Loop(0);      // Prints no pulse multigraph
+ *      root> t.Loop(1);      // Prints one pulse multigraph
+ *      root> t.Loop(2);      // Prints two pulse multigraph
+ *
+ *
+ *     This is the loop skeleton where:
+ *    jentry is the global entry number in the chain
+ *    ientry is the entry number in the current Tree
+ *  Note that the argument to GetEntry must be:
+ *    jentry for TChain::GetEntry
+ *    ientry for TTree::GetEntry and TBranch::GetEntry
+ *
+ *       To read only selected branches, Insert statements like:
+ * METHOD1:
+ *    fChain->SetBranchStatus("*",0);  // disable all branches
+ *    fChain->SetBranchStatus("branchname",1);  // activate branchname
+ * METHOD2: replace line
+ *    fChain->GetEntry(jentry);       //read all branches
+ *    b_branchname->GetEntry(ientry); //read only this branch
+ */
+
+/*
  * @param: pulse_display: value taken from the loop function, determines which plots are outputted
  * @param: no_pulse_display- type bool value for the no pulse output
  * @param: one_pluse_display- type bool value for the one pulse output
  * @param: two_pulse_display- type bool value for the two pulse output
  */
+void	set_display(Int_t &pulse_display, Bool_t &no_pulse_display, Bool_t &one_pulse_display, Bool_t &two_pulse_display);
 
-void	display (Int_t &pulse_display, Bool_t &no_pulse_display, Bool_t &one_pulse_display, Bool_t &two_pulse_display);
-
-//   In a ROOT session, you can do:
-//      root> .L tree.C
-//      root> tree t
-//      root> t.GetEntry(12); // Fill t data members with entry number 12
-//      root> t.Show();       // Show values of entry 12
-//      root> t.Show(16);     // Read and show values of entry 16
-//      root> t.Loop();       // Loop on all entries and prints all multigraphs (i.e. no pulse, one pulse, two pulse)
-//      root> t.Loop(0);      // Prints no pulse multigraph
-//      root> t.Loop(1);      // Prints one pulse multigraph
-//      root> t.Loop(2);      // Prints two pulse multigraph
-//
-
-//     This is the loop skeleton where:
-//    jentry is the global entry number in the chain
-//    ientry is the entry number in the current Tree
-//  Note that the argument to GetEntry must be:
-//    jentry for TChain::GetEntry
-//    ientry for TTree::GetEntry and TBranch::GetEntry
-//
-//       To read only selected branches, Insert statements like:
-// METHOD1:
-//    fChain->SetBranchStatus("*",0);  // disable all branches
-//    fChain->SetBranchStatus("branchname",1);  // activate branchname
-// METHOD2: replace line
-//    fChain->GetEntry(jentry);       //read all branches
-//by  b_branchname->GetEntry(ientry); //read only this branch
 
 void	tree::Loop(Int_t pulse_display = -1)
 {
@@ -49,6 +50,8 @@ void	tree::Loop(Int_t pulse_display = -1)
 
 	const Double_t	threshold = 50; //JR I'm adding this is but I am not quite sure what threshold is used for the pulse analysis
 	const Int_t		number_entries = 128;
+
+	// x-coordinates to draw the signal trace
 	const Int_t		x[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127};
 
 	Long64_t		nentries = fChain->GetEntriesFast();
@@ -101,8 +104,8 @@ void	tree::Loop(Int_t pulse_display = -1)
 			graph_nopulse[noPulse_counter]->SetLineColor(2);
 			multigraph_nopulse[noPulse_counter] -> Add(graph_nopulse[noPulse_counter]); // addition of plot to multigraph
 
-			Double_t	plotX[2] = {0.0, 128.0}; // array holding x-coordinates
-			Double_t	plotY[2] = {off, off}; // array holding y-coordinates
+			Double_t	plotX[2] = {0.0, 128.0}; // x-coordinates to draw the offset line
+			Double_t	plotY[2] = {off, off}; // y-coordinates to draw the offset line
 
 			noPulse_offset_line[noPulse_counter] = new TGraph(2, plotX, plotY); // initialize new graph for offset line
 
@@ -110,7 +113,7 @@ void	tree::Loop(Int_t pulse_display = -1)
 			multigraph_nopulse[noPulse_counter]->SetMinimum(-100); // lower bound of plot
 			multigraph_nopulse[noPulse_counter]->SetMaximum(50); // upper bound of plot
 
-			++noPulse_counter; // increment counter by 1 until 9 is hit
+			++noPulse_counter;
 		}
 
 		if (onePulse_counter < ngraph && jentry > 1000 && one_pulse_display)
@@ -119,8 +122,8 @@ void	tree::Loop(Int_t pulse_display = -1)
 
 			multigraph_onepulse[onePulse_counter] = new TMultiGraph(title_onepulse, title_onepulse); // initialize multigraph
 
-			Double_t	plotX[2] = {0.0, 128.0}; // x-coordinates
-			Double_t	plotY[2] = {-threshold, -threshold}; // y-coordinates
+			Double_t	plotX[2] = {0.0, 128.0};
+			Double_t	plotY[2] = {-threshold, -threshold}; // y-coordinates to draw the theshold line
 
 			onePulse_threshold_line[onePulse_counter] = new TGraph(2, plotX, plotY); 
 
@@ -142,10 +145,10 @@ void	tree::Loop(Int_t pulse_display = -1)
 					multigraph_onepulse[onePulse_counter]->Add(graph_onepulse[onePulse_counter]); 
 					multigraph_onepulse[onePulse_counter]->Add(onePulse_threshold_line[onePulse_counter], "L");
 
-					multigraph_onepulse[onePulse_counter]->SetMinimum(-2000); // set lower bound
-					multigraph_onepulse[onePulse_counter]->SetMaximum(200); // set upper bound
+					multigraph_onepulse[onePulse_counter]->SetMinimum(-2000);
+					multigraph_onepulse[onePulse_counter]->SetMaximum(200);
 
-					++onePulse_counter; // increment by 1 until 9 
+					++onePulse_counter;
 				}
 			}
 		}
@@ -156,8 +159,8 @@ void	tree::Loop(Int_t pulse_display = -1)
 
 			multigraph_twopulse[twoPulse_counter] = new TMultiGraph(title_twopulse, title_twopulse); // initialize multigraph
 
-			Double_t	plotX[2] = {0.0, 128.0}; // x-coordinates
-			Double_t	plotY[2] = {-threshold, -threshold}; // y-coordinates
+			Double_t	plotX[2] = {0.0, 128.0};
+			Double_t	plotY[2] = {-threshold, -threshold};
 
 			twoPulse_offset_line[twoPulse_counter] = new TGraph(2, plotX, plotY); // initialize new graph for offset line
 
@@ -184,11 +187,11 @@ void	tree::Loop(Int_t pulse_display = -1)
 						cout << endl;
 
 						multigraph_twopulse[twoPulse_counter]->Add(graph_twopulse[twoPulse_counter]);
-						multigraph_twopulse[twoPulse_counter]->Add(twoPulse_offset_line[twoPulse_counter], "L"); // addition of offset line
-						multigraph_twopulse[twoPulse_counter]->SetMinimum(-1600); // set lower bound
-						multigraph_twopulse[twoPulse_counter]->SetMaximum(200); // set upper bound
+						multigraph_twopulse[twoPulse_counter]->Add(twoPulse_offset_line[twoPulse_counter], "L");
+						multigraph_twopulse[twoPulse_counter]->SetMinimum(-1600);
+						multigraph_twopulse[twoPulse_counter]->SetMaximum(200);
 
-						++twoPulse_counter; // increment by 1 until 9
+						++twoPulse_counter;
 					}
 				}
 			}
@@ -200,7 +203,6 @@ void	tree::Loop(Int_t pulse_display = -1)
 	if (no_pulse_display) // if no_pulse_display is set to TRUE
 	{
 		auto multipleNoPulsePlots = new TCanvas("c1", "Entries for No Pulse Plots"); // initialize a new canvas
-
 		multipleNoPulsePlots->Divide(3, 3); // divide canvas into 3 by 3 sections
 
 		for (Int_t i = 0; i < ngraph; ++i) // as long at i is less than ngraph(9)
@@ -208,14 +210,12 @@ void	tree::Loop(Int_t pulse_display = -1)
 			multipleNoPulsePlots->cd(i + 1); // on the canvas of multipleNoPulsePlots...
 			multigraph_nopulse[i]->Draw("ACP"); // draw the plot at index i
 		}
-
 		multipleNoPulsePlots->Print("multipleNoPulsePlots.pdf"); // prints pdf of multigraph
 	}
 
 	if (one_pulse_display) // if one_signal_display is set to TRUE
 	{
 		auto multipleOnePulsePlots = new TCanvas("c2", "Entries for One Pulse Plots");
-
 		multipleOnePulsePlots->Divide(3, 3);
 
 		for (Int_t i = 0; i < ngraph; ++i)
@@ -223,7 +223,6 @@ void	tree::Loop(Int_t pulse_display = -1)
 			multipleOnePulsePlots->cd(i + 1);
 			multigraph_onepulse[i]->Draw("ACP");
 		}
-
 		multipleOnePulsePlots->Print("multipleOnePulsePlots.pdf");
 	}
 
@@ -243,8 +242,7 @@ void	tree::Loop(Int_t pulse_display = -1)
 	return;
 }
 
-
-void	display(Int_t &pulse_display, Bool_t &no_pulse_display, Bool_t &one_pulse_display, Bool_t &two_pulse_display)
+static void		set_display(Int_t &pulse_display, Bool_t &no_pulse_display, Bool_t &one_pulse_display, Bool_t &two_pulse_display)
 {
 	// control flow for param selection
 	if (pulse_display == 0) // if t.Loop(0), only multigraph for no pulse is displayed
@@ -264,8 +262,6 @@ void	display(Int_t &pulse_display, Bool_t &no_pulse_display, Bool_t &one_pulse_d
 // this function returns the start array
 Float_t		*tree::start(Int_t sig[])
 {
-	//cout<<" jentry= "<<jentry<<endl;
-	//cout<<" A1="<<A1<<"  t1="<<t1<<" A2="<<A2<<" t2="<<t2<<endl;
 
 	const Int_t	narray = 128;
 	const Int_t	maxpulse = 4; //looking for up to 4 pulses
@@ -295,13 +291,9 @@ Float_t		*tree::start(Int_t sig[])
 	return start_time;
 }
 
-
 // this function returns the stop array
 Float_t* tree::stop(Int_t sig[])
 {
-	//cout<<" jentry= "<<jentry<<endl;
-	//cout<<" A1="<<A1<<"  t1="<<t1<<" A2="<<A2<<" t2="<<t2<<endl;
-
 	const Int_t	narray = 128;
 	const Int_t	maxpulse = 4; //looking for up to 4 pulses
 
@@ -328,14 +320,15 @@ Float_t* tree::stop(Int_t sig[])
 	return stop_time;
 }
 
+/*
+*	@param: NSB			number of sample before the first sample cross the threshold
+*	@param: NSA			number of sample after the first sample cross the threshold
+*	@param: PTWMIn/MAX	triger window in which the pulses are searched
+*	@param: TET			programmable theshold
+*	@param: NSAT		number of consecutive sample above thrshold for a valid signal
+*/
 void	tree::pulseFADC(Int_t NSA, Int_t NSB, Int_t PTW_min, Int_t PTW_max, Int_t TET, Int_t NSAT)
 {
-	// NSB number of sample before the first sample cross the threshold
-	// NSA number of sample after the first sample cross the threshold
-	// PTWMIn and MAX triger window in which the pulses are searched
-	//TET programmable theshold
-	// NSAT number of consecutive sample above thrshold for a valid signal
-
 	Bool_t	bad_input = kFALSE;
 	Bool_t	verbose = kTRUE;
 
