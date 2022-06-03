@@ -260,9 +260,9 @@ Float_t		*tree::start(Int_t sig[])
 	for (Int_t i = 0; i < narray; ++i)
 	{
 
-		if (-sig[i] >= THRESHOLD && start_time[npulse] == narray)	     
+		if (-sig[i] >= threshold && start_time[npulse] == narray)	     
 			start_time[npulse] = i;	
-		if (-sig[i] <= THRESHOLD && start_time[npulse] != narray && stop_time[npulse] == 0)
+		if (-sig[i] <= threshold && start_time[npulse] != narray && stop_time[npulse] == 0)
 		{
 			stop_time[npulse] = i;
 			++npulse;
@@ -289,9 +289,9 @@ Float_t* tree::stop(Int_t sig[])
 
 	for (Int_t i = 0; i < narray; ++i)
 	{
-		if (-sig[i] >= THRESHOLD && start_time[npulse] == narray)	     
+		if (-sig[i] >= threshold && start_time[npulse] == narray)	     
 			start_time[npulse] = i;	
-		if(-sig[i] <= THRESHOLD && start_time[npulse] != narray && stop_time[npulse] == 0)
+		if(-sig[i] <= threshold && start_time[npulse] != narray && stop_time[npulse] == 0)
 		{
 			stop_time[npulse] = i;
 			++npulse;
