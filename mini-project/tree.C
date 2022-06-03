@@ -39,14 +39,15 @@
  */
 
 /*
- * @param: pulse_display: value taken from the loop function, determines which plots are outputted
- * @param: no_pulse_display- type bool value for the no pulse output
- * @param: one_pluse_display- type bool value for the one pulse output
- * @param: two_pulse_display- type bool value for the two pulse output
+ * @param: pulse_display	option to pick which multigraphs to show.
+ * 							-1 is sent by default
+ *
+ * 							=  0		only show the 0 pulse instances
+ * 							=  1		only show the 1 pulse instances
+ * 							=  2		only show the 2 pulse instances
+ * 							!= 0,1,2	display all graphs
+ *
  */
-static void	set_display(Int_t &pulse_display, Bool_t &no_pulse_display, Bool_t &one_pulse_display, Bool_t &two_pulse_display);
-
-
 void	tree::Loop(Int_t pulse_display = -1)
 {
 	if (fChain == 0)
@@ -57,34 +58,35 @@ void	tree::Loop(Int_t pulse_display = -1)
 
 	Long64_t		nentries = fChain->GetEntriesFast();
 
-	// counters
-	Int_t	noPulse_counter = 0; // counter for no pulse
-	Int_t	onePulse_counter = 0; // counter for one pulse
-	Int_t	twoPulse_counter = 0; // counter for two pulses
+	// counters keep track of how many events of each type are found. each will
+	// stop at MAX_NUM_GRAPHS (9) since the program only cares to graph those first 
+	// few instances
+	Int_t	noPulse_counter = 0;
+	Int_t	onePulse_counter = 0;
+	Int_t	twoPulse_counter = 0;
 
-	// declaration of multigraph, no pulse plots and offset line 
+	// declaration of multigraph, no pulse plots, and offset line 
 	TMultiGraph	*multigraph_nopulse[MAX_NUM_GRAPHS];
 	TGraph		*graph_nopulse[MAX_NUM_GRAPHS];
 	TGraph		*noPulse_offset_line[MAX_NUM_GRAPHS];
 
-	// declaration of multigraph, one pulse plots, point of pulse and offset line
+	// declaration of multigraph, one pulse plots, point of pulse, and offset line
 	TMultiGraph	*multigraph_onepulse[MAX_NUM_GRAPHS];
 	TGraph		*graph_onepulse[MAX_NUM_GRAPHS];
-	TGraph		*graph_onepulse_dot[MAX_NUM_GRAPHS];
+//	TGraph		*graph_onepulse_dot[MAX_NUM_GRAPHS];
 	TGraph		*onePulse_threshold_line[MAX_NUM_GRAPHS];
 
-	// declaration of multigraph, two pulse plots, points of pulses and offset line 
+	// declaration of multigraph, two pulse plots, points of pulses, and offset line 
 	TMultiGraph	*multigraph_twopulse[MAX_NUM_GRAPHS];
 	TGraph		*graph_twopulse[MAX_NUM_GRAPHS];
-	TGraph		*graph_twopulse_dot1[MAX_NUM_GRAPHS];
-	TGraph		*graph_twopulse_dot2[MAX_NUM_GRAPHS];
+//	TGraph		*graph_twopulse_dot1[MAX_NUM_GRAPHS];
+//	TGraph		*graph_twopulse_dot2[MAX_NUM_GRAPHS];
 	TGraph		*twoPulse_offset_line[MAX_NUM_GRAPHS];
 
-	Bool_t		no_pulse_display = kFALSE; // corresponds to no signal
-	Bool_t		one_pulse_display = kFALSE; // corresponds to 1 signal
-	Bool_t		two_pulse_display = kFALSE; // corresponds to 2 signals
-
-	set_display(pulse_display, no_pulse_display, one_pulse_display, two_pulse_display);
+	// uses pulse_display variable to set display options
+	Bool_t		no_pulse_display  = (pulse_display != 1 && pulse_display != 2) ? kTRUE : kFALSE;
+	Bool_t		one_pulse_display = (pulse_display != 0 && pulse_display != 2) ? kTRUE : kFALSE;
+	Bool_t		two_pulse_display = (pulse_display != 0 && pulse_display != 1) ? kTRUE : kFALSE;
 
 	// main loop. this loops over all the events in the tree.
 	for (Long64_t jentry = 0; jentry < nentries; ++jentry)
@@ -198,8 +200,6 @@ void	tree::Loop(Int_t pulse_display = -1)
 		}
 	}
 
-	cout << " I'm out\n"; // to output out of loop
-
 	if (no_pulse_display) // if no_pulse_display is set to TRUE
 	{
 		auto multipleNoPulsePlots = new TCanvas("c1", "Entries for No Pulse Plots"); // initialize a new canvas
@@ -242,23 +242,6 @@ void	tree::Loop(Int_t pulse_display = -1)
 	return;
 }
 
-static void		set_display(Int_t &pulse_display, Bool_t &no_pulse_display, Bool_t &one_pulse_display, Bool_t &two_pulse_display)
-{
-	// control flow for param selection
-	if (pulse_display == 0) // if t.Loop(0), only multigraph for no pulse is displayed
-		no_pulse_display = kTRUE;
-	else if (pulse_display == 1) // if t.Loop(1), only multigraph for one pulse is displayed
-		one_pulse_display = kTRUE;
-	else if (pulse_display == 2) // if t.Loop(2), only multigraph for two pulse is displayed
-		two_pulse_display = kTRUE;
-	else // any other number or no number as the parameter of t.Loop(), all multigraphs are displayed (i.e. no pulse, one pulse, two pulse)
-	{
-		no_pulse_display = kTRUE;
-		one_pulse_display = kTRUE;
-		two_pulse_display = kTRUE;
-	}
-}
-
 // this function returns the start array
 Float_t		*tree::start(Int_t sig[])
 {
@@ -284,9 +267,9 @@ Float_t		*tree::start(Int_t sig[])
 			stop_time[npulse] = i;
 			++npulse;
 			if (npulse == maxpulse)
-				i = narray + 1;
-		}
-	}
+				break;
+		}              
+	}                  
 
 	return start_time;
 }
@@ -313,7 +296,7 @@ Float_t* tree::stop(Int_t sig[])
 			stop_time[npulse] = i;
 			++npulse;
 			if (npulse == maxpulse)
-				i = narray + 1;
+				break;
 		}
 	}
 
