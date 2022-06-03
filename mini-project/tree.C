@@ -49,38 +49,15 @@ void	tree::Loop(Int_t pulse_display = -1)
 
 	const Double_t	threshold = 50; //JR I'm adding this is but I am not quite sure what threshold is used for the pulse analysis
 	const Int_t		number_entries = 128;
-	const Double_t		x[] = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0, 32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0, 40.0, 41.0, 42.0, 43.0, 44.0, 45.0, 46.0, 47.0, 48.0, 49.0, 50.0, 51.0, 52.0, 53.0, 54.0, 55.0, 56.0, 57.0, 58.0, 59.0, 60.0, 61.0, 62.0, 63.0, 64.0, 65.0, 66.0, 67.0, 68.0, 69.0, 70.0, 71.0, 72.0, 73.0, 74.0, 75.0, 76.0, 77.0, 78.0, 79.0, 80.0, 81.0, 82.0, 83.0, 84.0, 85.0, 86.0, 87.0, 88.0, 89.0, 90.0, 91.0, 92.0, 93.0, 94.0, 95.0, 96.0, 97.0, 98.0, 99.0, 100.0, 101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0, 108.0, 109.0, 110.0, 111.0, 112.0, 113.0, 114.0, 115.0, 116.0, 117.0, 118.0, 119.0, 120.0, 121.0, 122.0, 123.0, 124.0, 125.0, 126.0, 127.0};
-	Double_t		y[number_entries];
+	const Int_t		x[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127};
+
 	Long64_t		nentries = fChain->GetEntriesFast();
-
-//	Double_t x1,x2,x3,x4,y1,y2,y3,y4;
-//
-//	Double_t t1_arr1[1];
-//	Double_t A1_arr1[1];
-//
-//	Double_t t1_arr2[1];
-//	Double_t A1_arr2[1];
-//	Double_t t2_arr2[1];
-//	Double_t A2_arr2[1];
-//
-//	Double_t min_A1 = 50000;
-//	Double_t max_A1 = 0;
-//	Double_t max_A2 = 0;
-//
-//	Double_t tmin;
-//	Double_t tmax;
-
-//	const Int_t cluster_entries = (number_entries / 4); 
-//	Double_t sig_divide_four[cluster_entries]; // new array to hold the clustered values of array "sig" (32 length)
 
 	// counters
 	const	Int_t ngraph = 9;
 	Int_t	noPulse_counter = 0; // counter for no pulse
 	Int_t	onePulse_counter = 0; // counter for one pulse
 	Int_t	twoPulse_counter = 0; // counter for two pulses
-
-	// test graph and multigraph
-	TGraph	*graph_average_four[ngraph];
 
 	// declaration of multigraph, no pulse plots and offset line 
 	TMultiGraph	*multigraph_nopulse[ngraph];
@@ -100,29 +77,16 @@ void	tree::Loop(Int_t pulse_display = -1)
 	TGraph		*graph_twopulse_dot2[ngraph];
 	TGraph		*twoPulse_offset_line[ngraph];
 
-	Bool_t		no_pulse_display=kFALSE; // corresponds to no signal
-	Bool_t		one_pulse_display=kFALSE; // corresponds to 1 signal
-	Bool_t		two_pulse_display=kFALSE; // corresponds to 2 signals
+	Bool_t		no_pulse_display = kFALSE; // corresponds to no signal
+	Bool_t		one_pulse_display = kFALSE; // corresponds to 1 signal
+	Bool_t		two_pulse_display = kFALSE; // corresponds to 2 signals
 
 	display(pulse_display, no_pulse_display, one_pulse_display, two_pulse_display);
 
-//	Long64_t nbytes = 0, nb = 0;
-//	Int_t counter = 0;
-
-	// this loops over all the events in the tree
+	// main loop. this loops over all the events in the tree.
 	for (Long64_t jentry = 0; jentry < nentries; ++jentry)
 	{
-//		Long64_t ientry = LoadTree(jentry);
-//		if (ientry < 0)
-//			break;
-
 		fChain->GetEntry(jentry);
-
-//	int sum = 0;
-//	int index = 0;
-
-		for (Int_t i = 0; i < number_entries; ++i)
-			y[i] = sig[i];
 
 		if (jentry < 10)
 			pulseFADC(8,4, 10, 110, 50, 10);
@@ -132,7 +96,7 @@ void	tree::Loop(Int_t pulse_display = -1)
 			TString		title_nopulse = Form("Event # %lld", jentry); // title form
 
 			multigraph_nopulse[noPulse_counter] = new TMultiGraph(title_nopulse, title_nopulse); // initialize multigraph
-			graph_nopulse[noPulse_counter] = new TGraph(number_entries, x, y); // initialize plot of no pulses (y)
+			graph_nopulse[noPulse_counter] = new TGraph(number_entries, x, sig); // initialize plot of no pulses (y)
 
 			graph_nopulse[noPulse_counter]->SetLineColor(2);
 			multigraph_nopulse[noPulse_counter] -> Add(graph_nopulse[noPulse_counter]); // addition of plot to multigraph
@@ -141,6 +105,7 @@ void	tree::Loop(Int_t pulse_display = -1)
 			Double_t	plotY[2] = {off, off}; // array holding y-coordinates
 
 			noPulse_offset_line[noPulse_counter] = new TGraph(2, plotX, plotY); // initialize new graph for offset line
+
 			multigraph_nopulse[noPulse_counter]->Add(noPulse_offset_line[noPulse_counter], "L"); // addition of offset line to multigraph
 			multigraph_nopulse[noPulse_counter]->SetMinimum(-100); // lower bound of plot
 			multigraph_nopulse[noPulse_counter]->SetMaximum(50); // upper bound of plot
@@ -159,7 +124,7 @@ void	tree::Loop(Int_t pulse_display = -1)
 
 			onePulse_threshold_line[onePulse_counter] = new TGraph(2, plotX, plotY); 
 
-			graph_onepulse[onePulse_counter] = new TGraph(number_entries, x, y); // initialize plot of no pulses (y)
+			graph_onepulse[onePulse_counter] = new TGraph(number_entries, x, sig); // initialize plot of no pulses (y)
 			graph_onepulse[onePulse_counter]->SetLineColor(2);
 
 			Float_t		*start_array_1_detection = start(sig);
@@ -196,7 +161,7 @@ void	tree::Loop(Int_t pulse_display = -1)
 
 			twoPulse_offset_line[twoPulse_counter] = new TGraph(2, plotX, plotY); // initialize new graph for offset line
 
-			graph_twopulse[twoPulse_counter] = new TGraph(number_entries, x, y); // initialize plot of two pulse (y_2)
+			graph_twopulse[twoPulse_counter] = new TGraph(number_entries, x, sig); // initialize plot of two pulse (y_2)
 			graph_twopulse[twoPulse_counter]->SetLineColor(2);
 
 			Float_t		*start_array_2_detections = start(sig);
