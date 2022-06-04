@@ -84,9 +84,9 @@ void	tree::Loop(Int_t pulse_display = -1) {
 	TGraph		*twoPulse_offset_line[MAX_NUM_GRAPHS];
 
 	// uses pulse_display variable to set display options
-	Bool_t		no_pulse_display  = (pulse_display != 1 && pulse_display != 2) ? kTRUE : kFALSE;
-	Bool_t		one_pulse_display = (pulse_display != 0 && pulse_display != 2) ? kTRUE : kFALSE;
-	Bool_t		two_pulse_display = (pulse_display != 0 && pulse_display != 1) ? kTRUE : kFALSE;
+	Bool_t		display_no_pulse  = (pulse_display != 1 && pulse_display != 2) ? kTRUE : kFALSE;
+	Bool_t		display_one_pulse = (pulse_display != 0 && pulse_display != 2) ? kTRUE : kFALSE;
+	Bool_t		display_two_pulse = (pulse_display != 0 && pulse_display != 1) ? kTRUE : kFALSE;
 
 	// main loop. this loops over all the events in the tree.
 	for (Long64_t jentry = 0; jentry < nentries; ++jentry)
@@ -96,7 +96,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 		if (jentry < 10)
 			pulseFADC(8,4, 10, 110, 50, 10);
 
-		if (A1 == 0 && noPulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && no_pulse_display)
+		if (A1 == 0 && noPulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && display_no_pulse)
 		{	 
 			TString		title_nopulse = Form("Event # %lld", jentry); // title form
 
@@ -118,7 +118,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 			++noPulse_counter;
 		}
 
-		if (onePulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && one_pulse_display)
+		if (onePulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && display_one_pulse)
 		{
 			TString		title_onepulse = Form("Event # %lld",jentry); // title form
 
@@ -155,7 +155,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 			}
 		}
 
-		if (twoPulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && two_pulse_display)
+		if (twoPulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && display_two_pulse)
 		{
 			TString		title_twopulse = Form("Event # %lld", jentry);
 
@@ -200,7 +200,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 		}
 	}
 
-	if (no_pulse_display) // if no_pulse_display is set to TRUE
+	if (display_no_pulse) // if display_no_pulse is set to TRUE
 	{
 		auto multipleNoPulsePlots = new TCanvas("c1", "Entries for No Pulse Plots"); // initialize a new canvas
 		multipleNoPulsePlots->Divide(3, 3); // divide canvas into 3 by 3 sections
@@ -213,7 +213,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 		multipleNoPulsePlots->Print("multipleNoPulsePlots.pdf"); // prints pdf of multigraph
 	}
 
-	if (one_pulse_display) // if one_signal_display is set to TRUE
+	if (display_one_pulse) // if display_one_pulse is set to TRUE
 	{
 		auto multipleOnePulsePlots = new TCanvas("c2", "Entries for One Pulse Plots");
 		multipleOnePulsePlots->Divide(3, 3);
@@ -226,7 +226,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 		multipleOnePulsePlots->Print("multipleOnePulsePlots.pdf");
 	}
 
-	if (two_pulse_display) // if two_signal_display is set to TRUE
+	if (display_two_pulse) // if display_two_pulse is set to TRUE
 	{
 		auto multipleTwoPulsePlots = new TCanvas("c3", "Entries for Two Pulse Plots");
 		multipleTwoPulsePlots->Divide(3, 3);
