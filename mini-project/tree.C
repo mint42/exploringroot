@@ -49,6 +49,7 @@
  * 							!= 0,1,2	display all graphs
  *
  */
+
 void	tree::Loop(Int_t pulse_display = -1) {
 	if (fChain == 0)
 		return;
@@ -118,84 +119,70 @@ void	tree::Loop(Int_t pulse_display = -1) {
 			++noPulse_counter;
 		}
 
+		Float_t		*start_array_detection = start(sig);
+		Float_t		*stop_array_detection = stop(sig);
+
 		if (onePulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && display_one_pulse)
 		{
-			TString		title_onepulse = Form("Event # %lld",jentry); // title form
-
-			multigraph_onepulse[onePulse_counter] = new TMultiGraph(title_onepulse, title_onepulse); // initialize multigraph
-
-			Int_t	plotX[2] = {0, NUM_SIG_POINTS};
-			Int_t	plotY[2] = {-THRESHOLD, -THRESHOLD}; // y-coordinates to draw the theshold line
-
-			onePulse_threshold_line[onePulse_counter] = new TGraph(2, plotX, plotY); 
-
-			graph_onepulse[onePulse_counter] = new TGraph(NUM_SIG_POINTS, x, sig);
-			graph_onepulse[onePulse_counter]->SetLineColor(2);
-
-			Float_t		*start_array_1_detection = start(sig);
-			Float_t		*stop_array_1_detection = stop(sig);
-
-			if (start_array_1_detection[0] < NUM_SIG_POINTS &&
-				start_array_1_detection[1] == NUM_SIG_POINTS &&
-				stop_array_1_detection[0] > 0 &&
-				stop_array_1_detection[1] == 0)
+			if (start_array_detection[0] < NUM_SIG_POINTS &&
+				start_array_detection[1] == NUM_SIG_POINTS &&
+				stop_array_detection[0] > 0 &&
+				stop_array_detection[1] == 0 &&
+				(stop_array_detection[0] - start_array_detection[0] >= 12))
 			{
-				Int_t	duration_above_tc = stop_array_1_detection[0] - start_array_1_detection[0];
+				TString		title_onepulse = Form("Event # %lld",jentry); // title form
 
-				if (duration_above_tc >= 12)
-				{
-					multigraph_onepulse[onePulse_counter]->Add(graph_onepulse[onePulse_counter]); 
-					multigraph_onepulse[onePulse_counter]->Add(onePulse_threshold_line[onePulse_counter], "L");
+				multigraph_onepulse[onePulse_counter] = new TMultiGraph(title_onepulse, title_onepulse); // initialize multigraph
 
-					multigraph_onepulse[onePulse_counter]->SetMinimum(-2000);
-					multigraph_onepulse[onePulse_counter]->SetMaximum(200);
+				Int_t		plotX[2] = {0, NUM_SIG_POINTS};
+				Int_t		plotY[2] = {-THRESHOLD, -THRESHOLD}; // y-coordinates to draw the theshold line
 
-					++onePulse_counter;
-				}
+				onePulse_threshold_line[onePulse_counter] = new TGraph(2, plotX, plotY); 
+
+				graph_onepulse[onePulse_counter] = new TGraph(NUM_SIG_POINTS, x, sig);
+				graph_onepulse[onePulse_counter]->SetLineColor(2);
+
+				multigraph_onepulse[onePulse_counter]->Add(graph_onepulse[onePulse_counter]); 
+				multigraph_onepulse[onePulse_counter]->Add(onePulse_threshold_line[onePulse_counter], "L");
+
+				multigraph_onepulse[onePulse_counter]->SetMinimum(-2000);
+				multigraph_onepulse[onePulse_counter]->SetMaximum(200);
+
+				++onePulse_counter;
 			}
 		}
 
 		if (twoPulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && display_two_pulse)
 		{
-			TString		title_twopulse = Form("Event # %lld", jentry);
-
-			multigraph_twopulse[twoPulse_counter] = new TMultiGraph(title_twopulse, title_twopulse);
-
-			Int_t	plotX[2] = {0, NUM_SIG_POINTS};
-			Int_t	plotY[2] = {-THRESHOLD, -THRESHOLD};
-
-			twoPulse_offset_line[twoPulse_counter] = new TGraph(2, plotX, plotY);
-
-			graph_twopulse[twoPulse_counter] = new TGraph(NUM_SIG_POINTS, x, sig);
-			graph_twopulse[twoPulse_counter]->SetLineColor(2);
-
-			Float_t		*start_array_2_detections = start(sig);
-			Float_t		*stop_array_2_detections = stop(sig);
-
-			if (start_array_2_detections[1] < NUM_SIG_POINTS && stop_array_2_detections[1] > 0)
+			if ((start_array_detection[1] < NUM_SIG_POINTS && stop_array_detection[1] > 0) &&
+			   ((stop_array_detection[0] - start_array_detection[0]) >= 8) &&
+			   ((stop_array_detection[1] - start_array_detection[1]) >= 2))
 			{
-				Int_t	first_duration_above_tc = stop_array_2_detections[0] - start_array_2_detections[0];
+				cout << "First Start: " << start_array_detection[0] << endl;
+				cout << "Second Start: " << start_array_detection[1] << endl;
+				cout << "First Stop: " << stop_array_detection[0] << endl;
+				cout << "Second Stop: " << stop_array_detection[1] << endl;
+				cout << endl;
 
-				if (first_duration_above_tc >= 8)
-				{
-					Int_t	second_duration_above_tc = stop_array_2_detections[1] - start_array_2_detections[1];
+				TString		title_twopulse = Form("Event # %lld", jentry);
 
-					if (second_duration_above_tc >= 2)
-					{
-						cout << "First Start: " << start_array_2_detections[0] << endl;
-						cout << "Second Start: " << start_array_2_detections[1] << endl;
-						cout << "First Stop: " << stop_array_2_detections[0] << endl;
-						cout << "Second Stop: " << stop_array_2_detections[1] << endl;
-						cout << endl;
+				multigraph_twopulse[twoPulse_counter] = new TMultiGraph(title_twopulse, title_twopulse);
 
-						multigraph_twopulse[twoPulse_counter]->Add(graph_twopulse[twoPulse_counter]);
-						multigraph_twopulse[twoPulse_counter]->Add(twoPulse_offset_line[twoPulse_counter], "L");
-						multigraph_twopulse[twoPulse_counter]->SetMinimum(-1600);
-						multigraph_twopulse[twoPulse_counter]->SetMaximum(200);
+				Int_t		plotX[2] = {0, NUM_SIG_POINTS};
+				Int_t		plotY[2] = {-THRESHOLD, -THRESHOLD};
 
-						++twoPulse_counter;
-					}
-				}
+				twoPulse_offset_line[twoPulse_counter] = new TGraph(2, plotX, plotY);
+
+				graph_twopulse[twoPulse_counter] = new TGraph(NUM_SIG_POINTS, x, sig);
+				graph_twopulse[twoPulse_counter]->SetLineColor(2);
+
+
+				multigraph_twopulse[twoPulse_counter]->Add(graph_twopulse[twoPulse_counter]);
+				multigraph_twopulse[twoPulse_counter]->Add(twoPulse_offset_line[twoPulse_counter], "L");
+				multigraph_twopulse[twoPulse_counter]->SetMinimum(-1600);
+				multigraph_twopulse[twoPulse_counter]->SetMaximum(200);
+
+				++twoPulse_counter;
 			}
 		}
 	}
@@ -307,7 +294,11 @@ Float_t* tree::stop(Int_t sig[])
 *	@param: PTWMIn/MAX	triger window in which the pulses are searched
 *	@param: TET			programmable theshold
 *	@param: NSAT		number of consecutive sample above thrshold for a valid signal
+*
+*	pulseFADC(8,4, 10, 110, 50, 10);
+*
 */
+
 void	tree::pulseFADC(Int_t NSA, Int_t NSB, Int_t PTW_min, Int_t PTW_max, Int_t TET, Int_t NSAT)
 {
 	Bool_t	bad_input = kFALSE;
