@@ -287,7 +287,7 @@ Float_t* tree::stop(Int_t sig[])
 /*
 *	@param: NSB			number of sample before the first sample cross the threshold
 *	@param: NSA			number of sample after the first sample cross the threshold
-*	@param: PTWMIn/MAX	triger window in which the pulses are searched
+*	@param: PTWmin/max	triger window in which the pulses are searched
 *	@param: TET			programmable theshold
 *	@param: NSAT		number of consecutive sample above thrshold for a valid signal
 *
@@ -322,7 +322,7 @@ void	tree::pulseFADC(Int_t NSA, Int_t NSB, Int_t PTW_min, Int_t PTW_max, Int_t T
 		if (verbose)
 		{
 			for (Int_t i = 0; i < NUM_SIG_POINTS; ++i)
-				cout<<i<<":"<<sig[i]<<" , ";
+				cout << i << ":" << sig[i] << " , ";
 			cout << endl;
 		}
 
@@ -344,20 +344,19 @@ void	tree::pulseFADC(Int_t NSA, Int_t NSB, Int_t PTW_min, Int_t PTW_max, Int_t T
 			// find when the signal goes over threshold
 			if (-sig[i] >= TET && start_time[npulse] == NUM_SIG_POINTS)	     
 				start_time[npulse] = i;
-			// find the the signal goes back under threshold
+
+			// find when the signal goes back under threshold
 			if (-sig[i] <= TET && start_time[npulse] != NUM_SIG_POINTS && stop_time[npulse] == 0)
 			{
 				stop_time[npulse] = i;
 				if (verbose)
 					cout << "npulse =" << npulse << " pulse start=" << start_time[npulse] << " stop time =" << stop_time[npulse];
-				// check if the signal was over theshold for long enough
-				Int_t	duration = stop_time[npulse] - start_time[npulse] + 1;
 
-				if (duration > NSAT)
+				// check if the signal was over theshold for long enough
+				if (stop_time[npulse] - start_time[npulse] >= NSAT)
 				{
 					if (verbose)
 						cout << " pulse long enough\n";
-					//this is pulse was above threshold for long enough
 					++npulse;
 					++npulsefound;
 				}
