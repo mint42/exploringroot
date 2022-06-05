@@ -9,6 +9,7 @@
 #define NUM_SIG_POINTS 128			// number of data points saved by the signal array (sig[])
 #define NUM_SIG_POINTS_FLOAT 128.0	// Like NUM_SIG_POINTS but a double type
 #define THRESHOLD 50				// minimum sig[] value that could be considered a pulse
+#define MAX_NUM_PULSES 4			// maximum number of pulses possible to find in a given signal
 
 /*
  *   In a ROOT session, you can do:
@@ -232,10 +233,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 // this function returns the start array
 Float_t		*tree::start(Int_t sig[])
 {
-
-	const Int_t	maxpulse = 4; //looking for up to 4 pulses
-
-	for (Int_t i = 0; i < maxpulse; ++i)
+	for (Int_t i = 0; i < MAX_NUM_PULSES; ++i)
 	{
 		start_time[i] = NUM_SIG_POINTS;
 		stop_time[i] = 0;
@@ -252,7 +250,7 @@ Float_t		*tree::start(Int_t sig[])
 		{
 			stop_time[npulse] = i;
 			++npulse;
-			if (npulse == maxpulse)
+			if (npulse == MAX_NUM_PULSES)
 				break;
 		}
 	}
@@ -263,9 +261,7 @@ Float_t		*tree::start(Int_t sig[])
 // this function returns the stop array
 Float_t* tree::stop(Int_t sig[])
 {
-	const Int_t	maxpulse = 4; //looking for up to 4 pulses
-
-	for (Int_t i = 0; i < maxpulse; ++i)
+	for (Int_t i = 0; i < MAX_NUM_PULSES; ++i)
 	{
 		start_time[i] = NUM_SIG_POINTS;
 		stop_time[i] = 0;
@@ -280,7 +276,7 @@ Float_t* tree::stop(Int_t sig[])
 		{
 			stop_time[npulse] = i;
 			++npulse;
-			if (npulse == maxpulse)
+			if (npulse == MAX_NUM_PULSES)
 				break;
 		}
 	}
@@ -331,17 +327,17 @@ void	tree::pulseFADC(Int_t NSA, Int_t NSB, Int_t PTW_min, Int_t PTW_max, Int_t T
 		}
 
 		//looking for up to 4 pulses
-		const Int_t	maxpulse=4;
-		Int_t		npulsefound=0;
+		Int_t		npulsefound = 0;
 		Int_t		start_time[4];
 		Int_t		stop_time[4];
 
-		for (Int_t i = 0; i < maxpulse; ++i)
+		for (Int_t i = 0; i < MAX_NUM_PULSES; ++i)
 		{
 			start_time[i] = NUM_SIG_POINTS;
 			stop_time[i] = 0;
 		}
-		Int_t npulse = 0;
+
+		Int_t		npulse = 0;
 
 		for (Int_t i = PTW_min; i < PTW_max; ++i)
 		{
@@ -372,8 +368,8 @@ void	tree::pulseFADC(Int_t NSA, Int_t NSB, Int_t PTW_min, Int_t PTW_max, Int_t T
 					start_time[npulse] = NUM_SIG_POINTS;
 					stop_time[npulse] = 0;
 				}
-				if (npulse == maxpulse)
-					i = NUM_SIG_POINTS + 1;
+				if (npulse == MAX_NUM_PULSES)
+					break;
 			}
 		}
 
@@ -425,7 +421,7 @@ void	tree::pulseFADC(Int_t NSA, Int_t NSB, Int_t PTW_min, Int_t PTW_max, Int_t T
 		///pulse timing
 		if (verbose)
 			cout << "Pulse integral \n";
-		for (Int_t i = 0; i < maxpulse; ++i)
+		for (Int_t i = 0; i < MAX_NUM_PULSES; ++i)
 			FADC_time_coarse[i] = -1;
 
 		Int_t	vpeak = 0;
