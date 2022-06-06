@@ -30,7 +30,7 @@ Make sure to run the commands from inside the appropriate project folder so that
 
 [ex3](./ex3): ROOT macro. Uses TTree class and TTreeReader class to run a calculation on a example root file for a fake collision experiment. It finds the average magnitude of momentum from the set of all events. Credit for the [experiment.root](/ex3/experiment.root) file is in references.
 
-[mini-project](./mini-project) Analyzing data from a calorimeter
+[mini-project](./mini-project): Analyzing data from a calorimeter
 
 ## REFERENCES
 
