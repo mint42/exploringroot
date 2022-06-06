@@ -340,7 +340,7 @@ void	tree::pulseFADC()
 
 		Int_t		npulse = 0; // keeps track of the number of pulses detected
 
-		for (Int_t i = PTW_MIN; i < PTW_MAX; ++i)
+		for (Int_t i = PTW_MIN - 1; i < PTW_MAX - (NSAT + 1); ++i)
 		{
 			// find when the signal goes over threshold
 			if (-sig[i] >= TET && start_time[npulse] == TOTAL_NSAMPLES)	     
@@ -378,7 +378,8 @@ void	tree::pulseFADC()
 		}
 
 		// finding a pedestal at the begining of the trace
-		// if the first pulse started whitin the window of the pedestal, signal pedestal is bad with FADC_pedestal_good.
+		// if the first pulse started within the window of the pedestal,
+		// the signal is said to be bad and FADC_pedestal_good = false
 		Bool_t	FADC_pulse_pedestal_good = kTRUE;
 		Int_t	FADC_pulse_pedestal = 0;
 
@@ -387,7 +388,6 @@ void	tree::pulseFADC()
 
 		for (Int_t i = 0; i < NPED; ++i)
 			FADC_pulse_pedestal += sig[i];
-
 
 		if (verbose)
 		{
@@ -400,23 +400,24 @@ void	tree::pulseFADC()
 				cout << "bad pedestal\n";
 		}
 
-		/// pulse integral
+		// pulse integral
 		if (verbose)
 			cout << "Pulse integral \n";
+
+		Int_t	FADC_pulse_sum[MAX_NUM_PULSES] = {0, 0, 0, 0};
 
 		for (Int_t i = 0; i < npulse; ++i)
 		{
 			if (verbose)
 				cout << "pulse #" << i << "\n counting bins";
-			FADC_pulse_sum[i] = 0;
 
-			Int_t	countstart = std::min(start_time[i] - NSA, 0);
-			Int_t	countstop = std::min(start_time[i] + NSB, TOTAL_NSAMPLES);
+			Int_t	pulse_duration_start = std::max(start_time[i] - NSB, 1);
+			Int_t	pulse_duration_stop = std::min(start_time[i] + NSA - 1, PTW_MAX);
 
-			for (Int_t j = countstart; j < countstop; ++j)
+			for (Int_t j = pulse_duration_start - 1; j < pulse_duration_stop; ++j)
 			{
 				if (verbose)
-					cout << j << ":" << sig[j] <<" , ";
+					cout << j << ":" << sig[j] << " , ";
 				FADC_pulse_sum[i] += sig[j];
 			}
 			if (verbose)
@@ -426,9 +427,8 @@ void	tree::pulseFADC()
 		///pulse timing
 		if (verbose)
 			cout << "Pulse timing \n";
-		for (Int_t i = 0; i < MAX_NUM_PULSES; ++i)
-			FADC_time_coarse[i] = -1;
 
+		Int_t	FADC_time_coarse[MAX_NUM_PULSES] = {-1, -1, -1, -1};
 		Int_t	vpeak = 0;
 		Int_t	ipeak = 0;
 
