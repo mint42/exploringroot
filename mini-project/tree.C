@@ -139,8 +139,10 @@ void	tree::Loop(Int_t pulse_display = -1) {
 			++noPulse_counter;
 		}
 
-		Float_t		*start_array_detection = start(sig);
-		Float_t		*stop_array_detection = stop(sig);
+		Float_t		start_array_detection[MAX_NUM_PULSES] = {TOTAL_NSAMPLES, TOTAL_NSAMPLES, TOTAL_NSAMPLES, TOTAL_NSAMPLES};
+		Float_t		stop_array_detection[MAX_NUM_PULSES] = {0, 0, 0, 0};
+
+		find_start_and_stop(sig, start_array_detection, stop_array_detection);
 
 		if (onePulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && display_one_pulse)
 		{
@@ -250,7 +252,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 }
 
 // this function returns the start array
-Float_t		*tree::start(Int_t sig[])
+void	tree::find_start_and_stop(Int_t sig[], Float_t start_time[], Float_t stop_time[])
 {
 	for (Int_t i = 0; i < MAX_NUM_PULSES; ++i)
 	{
@@ -262,7 +264,6 @@ Float_t		*tree::start(Int_t sig[])
 
 	for (Int_t i = 0; i < TOTAL_NSAMPLES; ++i)
 	{
-
 		if (-sig[i] >= threshold && start_time[npulse] == TOTAL_NSAMPLES)	     
 			start_time[npulse] = i;	
 		if (-sig[i] <= threshold && start_time[npulse] != TOTAL_NSAMPLES && stop_time[npulse] == 0)
@@ -273,34 +274,6 @@ Float_t		*tree::start(Int_t sig[])
 				break;
 		}
 	}
-
-	return start_time;
-}
-
-// this function returns the stop array
-Float_t* tree::stop(Int_t sig[])
-{
-	for (Int_t i = 0; i < MAX_NUM_PULSES; ++i)
-	{
-		start_time[i] = TOTAL_NSAMPLES;
-		stop_time[i] = 0;
-	}
-	Int_t npulse = 0;
-
-	for (Int_t i = 0; i < TOTAL_NSAMPLES; ++i)
-	{
-		if (-sig[i] >= threshold && start_time[npulse] == TOTAL_NSAMPLES)	     
-			start_time[npulse] = i;	
-		if(-sig[i] <= threshold && start_time[npulse] != TOTAL_NSAMPLES && stop_time[npulse] == 0)
-		{
-			stop_time[npulse] = i;
-			++npulse;
-			if (npulse == MAX_NUM_PULSES)
-				break;
-		}
-	}
-
-	return stop_time;
 }
 
 void	tree::pulseFADC()

@@ -58,8 +58,7 @@ class tree
 		virtual void		Loop(Int_t pulse_display);
 		virtual Bool_t		Notify();
 		virtual void		Show(Long64_t entry = -1);
-		virtual Float_t		*start(Int_t sig[]);
-		virtual Float_t		*stop(Int_t sig[]);
+		virtual void		find_start_and_stop(Int_t sig[], Float_t start[], Float_t stop[]);
 		virtual void		pulseFADC();
 };
 
