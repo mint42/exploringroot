@@ -327,15 +327,8 @@ void	tree::pulseFADC(Int_t NSA, Int_t NSB, Int_t PTW_min, Int_t PTW_max, Int_t T
 		}
 
 		//looking for up to 4 pulses
-		Int_t		npulsefound = 0;
-		Int_t		start_time[4];
-		Int_t		stop_time[4];
-
-		for (Int_t i = 0; i < MAX_NUM_PULSES; ++i)
-		{
-			start_time[i] = NUM_SIG_POINTS;
-			stop_time[i] = 0;
-		}
+		Int_t		start_time[4] = {-1, -1, -1, -1};
+		Int_t		stop_time[4] = {-1, -1, -1, -1};
 
 		Int_t		npulse = 0;
 
@@ -343,30 +336,36 @@ void	tree::pulseFADC(Int_t NSA, Int_t NSB, Int_t PTW_min, Int_t PTW_max, Int_t T
 		{
 			// find when the signal goes over threshold
 			if (-sig[i] >= TET && start_time[npulse] == NUM_SIG_POINTS)	     
+			{
 				start_time[npulse] = i;
 
-			// find when the signal goes back under threshold
-			if (-sig[i] <= TET && start_time[npulse] != NUM_SIG_POINTS && stop_time[npulse] == 0)
-			{
+				++i;
+				while (-sig[i] >= TET && i < PTW_max) // loop until the signal goes back under the threshold
+					++i;
+
+				if (i == PTW_max) // pulse was over the threshold passed the PTW. Doesn't count?
+					break ;
+
 				stop_time[npulse] = i;
+
 				if (verbose)
 					cout << "npulse =" << npulse << " pulse start=" << start_time[npulse] << " stop time =" << stop_time[npulse];
-
+	
 				// check if the signal was over theshold for long enough
 				if (stop_time[npulse] - start_time[npulse] >= NSAT)
 				{
 					if (verbose)
 						cout << " pulse long enough\n";
 					++npulse;
-					++npulsefound;
 				}
 				else
 				{
 					if (verbose)
 						cout << " pulse too short\n";
-					start_time[npulse] = NUM_SIG_POINTS;
-					stop_time[npulse] = 0;
+					start_time[npulse] = -1;
+					stop_time[npulse] = -1;
 				}
+
 				if (npulse == MAX_NUM_PULSES)
 					break;
 			}
@@ -391,14 +390,14 @@ void	tree::pulseFADC(Int_t NSA, Int_t NSB, Int_t PTW_min, Int_t PTW_max, Int_t T
 			if (FADC_pulse_pedestal_good)
 				cout << "good pedestal\n";
 			else
-				cout<<"bad pedestal\n";
+				cout << "bad pedestal\n";
 		}
 
 		/// pulse integral
 		if (verbose)
 			cout << "Pulse integral \n";
 
-		for (Int_t i = 0; i < npulsefound; ++i)
+		for (Int_t i = 0; i < npulse; ++i)
 		{
 			if (verbose)
 				cout << "pulse #" << i << "\n counting bins";
@@ -419,14 +418,14 @@ void	tree::pulseFADC(Int_t NSA, Int_t NSB, Int_t PTW_min, Int_t PTW_max, Int_t T
 
 		///pulse timing
 		if (verbose)
-			cout << "Pulse integral \n";
+			cout << "Pulse timing \n";
 		for (Int_t i = 0; i < MAX_NUM_PULSES; ++i)
 			FADC_time_coarse[i] = -1;
 
 		Int_t	vpeak = 0;
 		Int_t	ipeak = 0;
 
-		for (Int_t i = 0; i < npulsefound; ++i)
+		for (Int_t i = 0; i < npulse; ++i)
 		{
 			if (verbose)
 				cout << "pulse #" << i << "\n counting bins";
