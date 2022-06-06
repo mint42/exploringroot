@@ -20,7 +20,7 @@ From the interactive shell:
 root [0] .x FILENAME.C
 ```
 
-Make sure to run the commands from inside the appropriate project foler so that there are no path resolving errors.
+Make sure to run the commands from inside the appropriate project folder so that there are no path resolving errors.
 
 ## OVERVIEW
 
@@ -29,6 +29,8 @@ Make sure to run the commands from inside the appropriate project foler so that 
 [ex2](./ex2): ROOT macro. Uses the TH1D class to create a histogram from some random data points centered around a bell curve
 
 [ex3](./ex3): ROOT macro. Uses TTree class and TTreeReader class to run a calculation on a example root file for a fake collision experiment. It finds the average magnitude of momentum from the set of all events. Credit for the [experiment.root](/ex3/experiment.root) file is in references.
+
+[mini-project](./mini-project) Analyzing data from a calorimeter
 
 ## REFERENCES
 
