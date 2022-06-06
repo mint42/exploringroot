@@ -6,10 +6,29 @@
 #include <vector>
 
 #define MAX_NUM_GRAPHS 9			// number of graphs to be drawn from each category (no pulse, 1 pulse, 2 pulse)
-#define NUM_SIG_POINTS 128			// number of data points saved by the signal array (sig[])
-#define NUM_SIG_POINTS_FLOAT 128.0	// Like NUM_SIG_POINTS but a double type
+#define TOTAL_NSAMPLES 128			// total number of data points saved by the signal array (sig[])
+#define TOTAL_NSAMPLES_FLOAT 128.0	// Like TOTAL_NSAMPLES but a float type
 #define THRESHOLD 50				// minimum sig[] value that could be considered a pulse
 #define MAX_NUM_PULSES 4			// maximum number of pulses possible to find in a given signal
+
+// Programmable Trigger Window: range of samples in a sig[]
+// that pulses can be detected [PTW_MIN, PTW_MAX]
+#define PTW_MIN	10
+#define PTW_MAX	110
+// Number of Samples Above Threshold: minimum number required to be considered a pulse
+#define NSAT	10
+// Threshold: a sample must be larger than this point to be considered a pulse
+#define TET		50
+// Number of Samples Before [TC]: used to define the beginning of a pulse
+#define NSB     4 
+// Number of Samples After [TC]: used to define the end of a pulse
+#define NSA		8
+// 	TC: Threshold Crossed: point at which a pulse first crosses the threshold.
+// 		it's different for each pulse and is used as a reference point for 
+// 		all these other variables.
+
+// Number of samples considered in the pedestal.
+#define NPED	4
 
 /*
  *   In a ROOT session, you can do:
@@ -56,7 +75,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 		return;
 
 	// x-coordinates to draw the signal trace
-	const Int_t		x[NUM_SIG_POINTS] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127};
+	const Int_t		x[TOTAL_NSAMPLES] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127};
 
 	Long64_t		nentries = fChain->GetEntriesFast();
 
@@ -96,19 +115,19 @@ void	tree::Loop(Int_t pulse_display = -1) {
 		fChain->GetEntry(jentry);
 
 		if (jentry < 10)
-			pulseFADC(8,4, 10, 110, 50, 10);
+			pulseFADC();
 
 		if (A1 == 0 && noPulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && display_no_pulse)
 		{	 
 			TString		title_nopulse = Form("Event # %lld", jentry); // title form
 
 			multigraph_nopulse[noPulse_counter] = new TMultiGraph(title_nopulse, title_nopulse); // initialize multigraph
-			graph_nopulse[noPulse_counter] = new TGraph(NUM_SIG_POINTS, x, sig); // initialize plot of no pulses
+			graph_nopulse[noPulse_counter] = new TGraph(TOTAL_NSAMPLES, x, sig); // initialize plot of no pulses
 
 			graph_nopulse[noPulse_counter]->SetLineColor(2);
 			multigraph_nopulse[noPulse_counter] -> Add(graph_nopulse[noPulse_counter]); // addition of plot to multigraph
 
-			Double_t	plotX[2] = {0, NUM_SIG_POINTS_FLOAT}; // x-coordinates to draw the offset line
+			Double_t	plotX[2] = {0, TOTAL_NSAMPLES_FLOAT}; // x-coordinates to draw the offset line
 			Double_t	plotY[2] = {off, off}; // y-coordinates to draw the offset line
 
 			noPulse_offset_line[noPulse_counter] = new TGraph(2, plotX, plotY); // initialize new graph for offset line
@@ -125,8 +144,8 @@ void	tree::Loop(Int_t pulse_display = -1) {
 
 		if (onePulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && display_one_pulse)
 		{
-			if (start_array_detection[0] < NUM_SIG_POINTS &&
-				start_array_detection[1] == NUM_SIG_POINTS &&
+			if (start_array_detection[0] < TOTAL_NSAMPLES &&
+				start_array_detection[1] == TOTAL_NSAMPLES &&
 				stop_array_detection[0] > 0 &&
 				stop_array_detection[1] == 0 &&
 				(stop_array_detection[0] - start_array_detection[0] >= 12))
@@ -135,12 +154,12 @@ void	tree::Loop(Int_t pulse_display = -1) {
 
 				multigraph_onepulse[onePulse_counter] = new TMultiGraph(title_onepulse, title_onepulse); // initialize multigraph
 
-				Int_t		plotX[2] = {0, NUM_SIG_POINTS};
+				Int_t		plotX[2] = {0, TOTAL_NSAMPLES};
 				Int_t		plotY[2] = {-THRESHOLD, -THRESHOLD}; // y-coordinates to draw the theshold line
 
 				onePulse_threshold_line[onePulse_counter] = new TGraph(2, plotX, plotY); 
 
-				graph_onepulse[onePulse_counter] = new TGraph(NUM_SIG_POINTS, x, sig);
+				graph_onepulse[onePulse_counter] = new TGraph(TOTAL_NSAMPLES, x, sig);
 				graph_onepulse[onePulse_counter]->SetLineColor(2);
 
 				multigraph_onepulse[onePulse_counter]->Add(graph_onepulse[onePulse_counter]); 
@@ -155,7 +174,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 
 		if (twoPulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && display_two_pulse)
 		{
-			if ((start_array_detection[1] < NUM_SIG_POINTS && stop_array_detection[1] > 0) &&
+			if ((start_array_detection[1] < TOTAL_NSAMPLES && stop_array_detection[1] > 0) &&
 			   ((stop_array_detection[0] - start_array_detection[0]) >= 8) &&
 			   ((stop_array_detection[1] - start_array_detection[1]) >= 2))
 			{
@@ -169,12 +188,12 @@ void	tree::Loop(Int_t pulse_display = -1) {
 
 				multigraph_twopulse[twoPulse_counter] = new TMultiGraph(title_twopulse, title_twopulse);
 
-				Int_t		plotX[2] = {0, NUM_SIG_POINTS};
+				Int_t		plotX[2] = {0, TOTAL_NSAMPLES};
 				Int_t		plotY[2] = {-THRESHOLD, -THRESHOLD};
 
 				twoPulse_offset_line[twoPulse_counter] = new TGraph(2, plotX, plotY);
 
-				graph_twopulse[twoPulse_counter] = new TGraph(NUM_SIG_POINTS, x, sig);
+				graph_twopulse[twoPulse_counter] = new TGraph(TOTAL_NSAMPLES, x, sig);
 				graph_twopulse[twoPulse_counter]->SetLineColor(2);
 
 
@@ -235,18 +254,18 @@ Float_t		*tree::start(Int_t sig[])
 {
 	for (Int_t i = 0; i < MAX_NUM_PULSES; ++i)
 	{
-		start_time[i] = NUM_SIG_POINTS;
+		start_time[i] = TOTAL_NSAMPLES;
 		stop_time[i] = 0;
 	}
 
 	Int_t		npulse = 0;
 
-	for (Int_t i = 0; i < NUM_SIG_POINTS; ++i)
+	for (Int_t i = 0; i < TOTAL_NSAMPLES; ++i)
 	{
 
-		if (-sig[i] >= threshold && start_time[npulse] == NUM_SIG_POINTS)	     
+		if (-sig[i] >= threshold && start_time[npulse] == TOTAL_NSAMPLES)	     
 			start_time[npulse] = i;	
-		if (-sig[i] <= threshold && start_time[npulse] != NUM_SIG_POINTS && stop_time[npulse] == 0)
+		if (-sig[i] <= threshold && start_time[npulse] != TOTAL_NSAMPLES && stop_time[npulse] == 0)
 		{
 			stop_time[npulse] = i;
 			++npulse;
@@ -263,16 +282,16 @@ Float_t* tree::stop(Int_t sig[])
 {
 	for (Int_t i = 0; i < MAX_NUM_PULSES; ++i)
 	{
-		start_time[i] = NUM_SIG_POINTS;
+		start_time[i] = TOTAL_NSAMPLES;
 		stop_time[i] = 0;
 	}
 	Int_t npulse = 0;
 
-	for (Int_t i = 0; i < NUM_SIG_POINTS; ++i)
+	for (Int_t i = 0; i < TOTAL_NSAMPLES; ++i)
 	{
-		if (-sig[i] >= threshold && start_time[npulse] == NUM_SIG_POINTS)	     
+		if (-sig[i] >= threshold && start_time[npulse] == TOTAL_NSAMPLES)	     
 			start_time[npulse] = i;	
-		if(-sig[i] <= threshold && start_time[npulse] != NUM_SIG_POINTS && stop_time[npulse] == 0)
+		if(-sig[i] <= threshold && start_time[npulse] != TOTAL_NSAMPLES && stop_time[npulse] == 0)
 		{
 			stop_time[npulse] = i;
 			++npulse;
@@ -284,18 +303,7 @@ Float_t* tree::stop(Int_t sig[])
 	return stop_time;
 }
 
-/*
-*	@param: NSB			number of sample before the first sample cross the threshold
-*	@param: NSA			number of sample after the first sample cross the threshold
-*	@param: PTWmin/max	triger window in which the pulses are searched
-*	@param: TET			programmable theshold
-*	@param: NSAT		number of consecutive sample above thrshold for a valid signal
-*
-*	pulseFADC(8,4, 10, 110, 50, 10);
-*
-*/
-
-void	tree::pulseFADC(Int_t NSA, Int_t NSB, Int_t PTW_min, Int_t PTW_max, Int_t TET, Int_t NSAT)
+void	tree::pulseFADC()
 {
 	Bool_t	bad_input = kFALSE;
 	Bool_t	verbose = kTRUE;
@@ -321,32 +329,30 @@ void	tree::pulseFADC(Int_t NSA, Int_t NSB, Int_t PTW_min, Int_t PTW_max, Int_t T
 	{
 		if (verbose)
 		{
-			for (Int_t i = 0; i < NUM_SIG_POINTS; ++i)
+			for (Int_t i = 0; i < TOTAL_NSAMPLES; ++i)
 				cout << i << ":" << sig[i] << " , ";
 			cout << endl;
 		}
 
 		//looking for up to 4 pulses
-		Int_t		start_time[4] = {-1, -1, -1, -1};
-		Int_t		stop_time[4] = {-1, -1, -1, -1};
+		Int_t		start_time[MAX_NUM_PULSES] = {-1, -1, -1, -1};
+		Int_t		stop_time[MAX_NUM_PULSES] = {-1, -1, -1, -1};
 
-		Int_t		npulse = 0;
+		Int_t		npulse = 0; // keeps track of the number of pulses detected
 
-		for (Int_t i = PTW_min; i < PTW_max; ++i)
+		for (Int_t i = PTW_MIN; i < PTW_MAX; ++i)
 		{
 			// find when the signal goes over threshold
-			if (-sig[i] >= TET && start_time[npulse] == NUM_SIG_POINTS)	     
+			if (-sig[i] >= TET && start_time[npulse] == TOTAL_NSAMPLES)	     
 			{
 				start_time[npulse] = i;
 
 				++i;
-				while (-sig[i] >= TET && i < PTW_max) // loop until the signal goes back under the threshold
+				while (-sig[i] >= TET && i < PTW_MAX) // loop until the signal goes back under the threshold
 					++i;
 
-				if (i == PTW_max) // pulse was over the threshold passed the PTW. Doesn't count?
-					break ;
-
-				stop_time[npulse] = i;
+				if (i < PTW_MAX) // pulse is still in the scope of the PTW
+					stop_time[npulse] = i;
 
 				if (verbose)
 					cout << "npulse =" << npulse << " pulse start=" << start_time[npulse] << " stop time =" << stop_time[npulse];
@@ -373,14 +379,15 @@ void	tree::pulseFADC(Int_t NSA, Int_t NSB, Int_t PTW_min, Int_t PTW_max, Int_t T
 
 		// finding a pedestal at the begining of the trace
 		// if the first pulse started whitin the window of the pedestal, signal pedestal is bad with FADC_pedestal_good.
-		FADC_pulse_pedestal_good = kTRUE;
-		FADC_pulse_pedestal = 0;
+		Bool_t	FADC_pulse_pedestal_good = kTRUE;
+		Int_t	FADC_pulse_pedestal = 0;
 
-		for (Int_t i = 0; i < 4; ++i)
+		if (start_time[0] < NPED)
+			FADC_pulse_pedestal_good = kFALSE;
+
+		for (Int_t i = 0; i < NPED; ++i)
 			FADC_pulse_pedestal += sig[i];
 
-		if (start_time[0] < NSA + NSB)
-			FADC_pulse_pedestal_good = kFALSE;
 
 		if (verbose)
 		{
@@ -404,7 +411,7 @@ void	tree::pulseFADC(Int_t NSA, Int_t NSB, Int_t PTW_min, Int_t PTW_max, Int_t T
 			FADC_pulse_sum[i] = 0;
 
 			Int_t	countstart = std::min(start_time[i] - NSA, 0);
-			Int_t	countstop = std::min(start_time[i] + NSB, NUM_SIG_POINTS);
+			Int_t	countstop = std::min(start_time[i] + NSB, TOTAL_NSAMPLES);
 
 			for (Int_t j = countstart; j < countstop; ++j)
 			{

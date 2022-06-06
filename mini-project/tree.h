@@ -36,8 +36,8 @@ class tree
 		Float_t		threshold = 400;
 
 		Int_t	FADC_pulse_sum[4];
-		Int_t	FADC_pulse_pedestal;
-		Int_t	FADC_pulse_pedestal_good;
+//		Int_t	FADC_pulse_pedestal;
+//		Int_t	FADC_pulse_pedestal_good;
 		Int_t	FADC_time_coarse[4];
 		Int_t	FADC_time_fine[4];
 
@@ -60,7 +60,7 @@ class tree
 		virtual void		Show(Long64_t entry = -1);
 		virtual Float_t		*start(Int_t sig[]);
 		virtual Float_t		*stop(Int_t sig[]);
-		virtual void		pulseFADC(Int_t NSA, Int_t NSB, Int_t PTW_min, Int_t PTW_max, Int_t TET, Int_t NSAT);
+		virtual void		pulseFADC();
 };
 
 #endif
