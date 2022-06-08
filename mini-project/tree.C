@@ -1,4 +1,5 @@
 #define tree_cxx 
+
 #include "tree.h"
 #include "fadc.h"
 #include <TH2.h>
@@ -84,7 +85,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 	{
 		fChain->GetEntry(jentry);
 
-		pulseFADC(pulses);
+		pulseFADC(pulses, sig);
 		if (pulses.npulses == 0)
 			++n_events_pulses[0];
 		else if (pulses.npulses == 1)
@@ -163,11 +164,10 @@ void	tree::Loop(Int_t pulse_display = -1) {
 			   ((stop_array_detection[1] - start_array_detection[1]) >= 2))
 			{
 				cout << "Two Pulse Event #: " << jentry << endl;
-				cout << "First Start: " << start_array_detection[0] << endl;
-				cout << "Second Start: " << start_array_detection[1] << endl;
-				cout << "First Stop: " << stop_array_detection[0] << endl;
-				cout << "Second Stop: " << stop_array_detection[1] << endl;
-				cout << endl;
+	//			cout << "First Start: " << start_array_detection[0] << endl;
+	//			cout << "Second Start: " << start_array_detection[1] << endl;
+	//			cout << "First Stop: " << stop_array_detection[0] << endl;
+	//			cout << "Second Stop: " << stop_array_detection[1] << endl;
 
 				TString		title_twopulse = Form("Event # %lld", jentry);
 
@@ -265,7 +265,7 @@ void	tree::find_start_and_stop(Int_t sig[], Float_t tc[], Float_t stop_time[])
 	}
 }
 
-void	tree::pulseFADC(struct fadc &pulses)
+void	pulseFADC(struct fadc &pulses, Int_t sig[])
 {
 	Bool_t	verbose = kFALSE;
 
