@@ -8,9 +8,13 @@
 #ifndef tree_h
 #define tree_h
 
+#include "fadc.h"
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
+
+#define TOTAL_NSAMPLES 128			// total number of data points saved by the signal array (sig[])
+#define TOTAL_NSAMPLES_FLOAT 128.0	// Like TOTAL_NSAMPLES but a float type
 
 // Header file for the classes stored in the TTree if any.
 
@@ -23,7 +27,7 @@ class tree
 		// Fixed size dimensions of array or collections stored in the TTree if any.
 
 		// Declaration of leaf types
-		Int_t		sig[128];
+		Int_t		sig[TOTAL_NSAMPLES];
 		Int_t		sig2[32];
 		Float_t		off;
 		Float_t		A1;
@@ -49,7 +53,7 @@ class tree
 		virtual Bool_t		Notify();
 		virtual void		Show(Long64_t entry = -1);
 		virtual void		find_start_and_stop(Int_t sig[], Float_t start[], Float_t stop[]);
-		virtual void		pulseFADC();
+		virtual void		pulseFADC(struct fadc &pulses);
 };
 
 #endif

@@ -1,32 +1,12 @@
 #define tree_cxx 
 #include "tree.h"
+#include "fadc.h"
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
 #include <vector>
 
 #define MAX_NUM_GRAPHS 9			// number of graphs to be drawn from each category (no pulse, 1 pulse, 2 pulse)
-#define TOTAL_NSAMPLES 128			// total number of data points saved by the signal array (sig[])
-#define TOTAL_NSAMPLES_FLOAT 128.0	// Like TOTAL_NSAMPLES but a float type
-#define MAX_NUM_PULSES 4			// maximum number of pulses possible to find in a given signal
-
-// Programmable Trigger Window: range of samples in a sig[]
-// that pulses can be detected [PTW_MIN, PTW_MAX]
-#define PTW_MIN	10
-#define PTW_MAX	110
-// Threshold: a sample must be larger than this point to be considered a pulse
-#define TET		100
-// Number of samples considered in the pedestal.
-#define NPED	4
-// Number of Samples Above Threshold: minimum number required to be considered a pulse
-#define NSAT	4
-// Number of Samples Before [TC]: used to define the beginning of a pulse
-#define NSB     2 
-// Number of Samples After [TC]: used to define the end of a pulse
-#define NSA		8
-// 	TC: Threshold Crossed: point at which a pulse first crosses the threshold.
-// 		it's different for each pulse and is used as a reference point for 
-// 		all these other variables.
 
 /*
  *     This is the loop skeleton where:
@@ -95,16 +75,27 @@ void	tree::Loop(Int_t pulse_display = -1) {
 	Bool_t		display_one_pulse = (pulse_display != 0 && pulse_display != 2) ? kTRUE : kFALSE;
 	Bool_t		display_two_pulse = (pulse_display != 0 && pulse_display != 1) ? kTRUE : kFALSE;
 
+	// for algorithm processing
+	struct fadc	pulses;
+	Int_t		n_events_pulses[MAX_NUM_PULSES + 1] = {0, 0, 0, 0, 0};
+
 	// main loop. this loops over all the events in the tree.
 	for (Long64_t jentry = 0; jentry < nentries; ++jentry)
 	{
 		fChain->GetEntry(jentry);
 
-		if (jentry > 1000 && jentry < 5000)
-			pulseFADC();
+		pulseFADC(pulses);
+		if (pulses.npulses == 0)
+			++n_events_pulses[0];
+		else if (pulses.npulses == 1)
+			++n_events_pulses[1];
+		else if (pulses.npulses == 2)
+			++n_events_pulses[2];
+		else if (pulses.npulses == 3)
+			++n_events_pulses[3];
+		else if (pulses.npulses == 4)
+			++n_events_pulses[4];
 
-		if (pulse_display == 0 || pulse_display == 1 || pulse_display == 2 || pulse_display == 3)
-		{
 		if (A1 == 0 && noPulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && display_no_pulse)
 		{	 
 			cout << "No Pulse Event #: " << jentry << endl;
@@ -199,10 +190,13 @@ void	tree::Loop(Int_t pulse_display = -1) {
 				++twoPulse_counter;
 			}
 		}
-		}
 	}
 
-	if (pulse_display == 0 || pulse_display == 1 || pulse_display == 2 || pulse_display == 3) {
+	cout << "# zero pulse events: " << n_events_pulses[0] << endl;
+	cout << "# one pulse events: " << n_events_pulses[1] << endl;
+	cout << "# two pulse events: " << n_events_pulses[2] << endl;
+	cout << "# three pulse events: " << n_events_pulses[3] << endl;
+	cout << "# four pulse events: " << n_events_pulses[4] << endl;
 
 	if (display_no_pulse) // if display_no_pulse is set to TRUE
 	{
@@ -242,7 +236,6 @@ void	tree::Loop(Int_t pulse_display = -1) {
 		}
 		multipleTwoPulsePlots->Print("multipleTwoPulsePlots.pdf");
 	}
-	}
 
 	return;
 }
@@ -272,20 +265,9 @@ void	tree::find_start_and_stop(Int_t sig[], Float_t tc[], Float_t stop_time[])
 	}
 }
 
-void	tree::pulseFADC()
+void	tree::pulseFADC(struct fadc &pulses)
 {
-//	For a future struct
-//	Int_t	pulse_pedestal;
-//	Int_t	pulse_integral[MAX_NUM_PULSES] = {0, 0, 0, 0};
-//	Int_t	pulse_time_coarse[MAX_NUM_PULSES] = {-1, -1, -1, -1};
-//	Int_t	pulse_time_fine[MAX_NUM_PULSES] = {-1, -1, -1, -1};
-//	Int_t	pulse_vpeak[MAX_NUM_PULSES] = {-1, -1, -1 ,-1};
-//	Int_t	pulse_vpeak_time[MAX_NUM_PULSES] = {-1, -1, -1 ,-1};
-//	Float_t	pulse_vmid[MAX_NUM_PULSES];
-//	Float_t	pulse_vmin;
-//	Int_t	npulse;
-//
-	Bool_t	verbose = kTRUE;
+	Bool_t	verbose = kFALSE;
 
 //	if (verbose)
 //	{
@@ -298,16 +280,18 @@ void	tree::pulseFADC()
 	if (verbose)
 		cout << "Finding valid pulses: \n";
 
-	Int_t		npulse = 0; // keeps track of the number of pulses detected
-	Int_t		tc[MAX_NUM_PULSES] = {0, 0, 0, 0}; // time that the threshold is first crossed by a pulse
+	Int_t	npulse = 0; // keeps track of the # of pulses detected
+	pulses.tc[0] = 0;
+	pulses.tc[1] = 0;
+	pulses.tc[2] = 0;
+	pulses.tc[3] = 0;
 
 	for (Int_t i = PTW_MIN; i < PTW_MAX; ++i)
 	{
 		// when the signal goes over the threshold
 		if (-sig[i] >= TET)
 		{
-			cout << "OVER\n";
-			tc[npulse] = i;
+			pulses.tc[npulse] = i;
 
 			// loop until the signal goes back under the threshold
 			++i;
@@ -315,10 +299,10 @@ void	tree::pulseFADC()
 				++i;
 
 			if (verbose)
-				cout << "npulse =" << npulse << " pulse start=" << tc[npulse] << endl;
+				cout << "npulse =" << npulse << " pulse start=" << pulses.tc[npulse] << endl;
 
 			// check if the signal was over theshold for long enough
-			if (i - tc[npulse] >= NSAT)
+			if (i - pulses.tc[npulse] >= NSAT)
 			{
 				if (verbose)
 					cout << " pulse long enough\n";
@@ -328,13 +312,15 @@ void	tree::pulseFADC()
 			{
 				if (verbose)
 					cout << " pulse too short\n";
-				tc[npulse] = 0;
+				pulses.tc[npulse] = 0;
 			}
 
 			if (npulse == MAX_NUM_PULSES)
 				break;
 		}
 	}
+	
+	pulses.npulses = npulse;
 
 	if (npulse == 0)
 		return ;
@@ -348,24 +334,23 @@ void	tree::pulseFADC()
 	if (verbose)
 		cout << "Finding the pedestal:\n";
 
-	Bool_t	FADC_pulse_pedestal_good = kTRUE;
-	Int_t	FADC_pulse_pedestal = 0;
+	pulses.pedestal_good = kTRUE;
+	pulses.pedestal = 0;
 
-	if (tc[0] < NPED) // checks if threshold is crossed in the pedestal range
+	if (pulses.tc[0] < NPED) // checks if threshold is crossed in the pedestal range
 	{
 		cout << "bad pedestal\n";
-		FADC_pulse_pedestal_good = kFALSE;
+		pulses.pedestal_good = kFALSE;
 		return ;
 	}
 
 	for (Int_t i = 0; i < NPED; ++i)
-		FADC_pulse_pedestal += sig[i];
+		pulses.pedestal += sig[i];
 
 	if (verbose)
 	{
-		cout << "Pedestal evaluation \n";
-		cout << "pedestal =" << FADC_pulse_pedestal << "\n";
 		cout << "good pedestal!\n";
+		cout << "pedestal value =" << pulses.pedestal << "\n";
 	}
 
 	if (verbose)
@@ -377,24 +362,28 @@ void	tree::pulseFADC()
 
 	Int_t	pulse_duration_start;
 	Int_t	pulse_duration_stop;
-	Int_t	FADC_pulse_sum[MAX_NUM_PULSES] = {0, 0, 0, 0};
 
-	for (Int_t i = 0; i < npulse; ++i)
+	pulses.integral[0] = 0;
+	pulses.integral[1] = 0;
+	pulses.integral[2] = 0;
+	pulses.integral[3] = 0;
+
+	for (Int_t i = 0; i < pulses.npulses; ++i)
 	{
 		if (verbose)
 			cout << "pulse #" << i + 1<< "\n";
 
-		pulse_duration_start = std::max(tc[i] - NSB, 1);
-		pulse_duration_stop = std::min(tc[i] + NSA - 1, PTW_MAX);
+		pulse_duration_start = std::max(pulses.tc[i] - NSB, 1);
+		pulse_duration_stop = std::min(pulses.tc[i] + NSA - 1, PTW_MAX);
 
 		for (Int_t j = pulse_duration_start; j < pulse_duration_stop; ++j)
 		{
 			if (verbose)
 				cout << j << ":" << sig[j] << " , ";
-			FADC_pulse_sum[i] += abs(sig[j]);
+			pulses.integral[i] += abs(sig[j]);
 		}
 		if (verbose)
-			cout << "integral =" << FADC_pulse_sum[i]<<"\n";
+			cout << "integral =" << pulses.integral[i]<<"\n";
 	}
 
 	if (verbose)
@@ -407,19 +396,28 @@ void	tree::pulseFADC()
 	if (verbose)
 		cout << "Pulse Peaks: \n";
 
-	Int_t	vpeak[MAX_NUM_PULSES] = {0, 0, 0, 0};
-	Int_t	vpeak_time[MAX_NUM_PULSES] = {0, 0, 0, 0};
-	Float_t	vmid[MAX_NUM_PULSES] = {0, 0, 0, 0};
+	pulses.vpeak[0] = 0;
+	pulses.vpeak[1] = 0;
+	pulses.vpeak[2] = 0;
+	pulses.vpeak[3] = 0;
+	pulses.vpeak_time[0] = 0;
+	pulses.vpeak_time[1] = 0;
+	pulses.vpeak_time[2] = 0;
+	pulses.vpeak_time[3] = 0;
+	pulses.vmid[0] = 0;
+	pulses.vmid[1] = 0;
+	pulses.vmid[2] = 0;
+	pulses.vmid[3] = 0;
 
-	for (Int_t i = 0; i < npulse; ++i)
+	for (Int_t i = 0; i < pulses.npulses; ++i)
 	{
-		for (Int_t j = tc[i]; j < PTW_MAX; ++j)
+		for (Int_t j = pulses.tc[i]; j < PTW_MAX; ++j)
 		{
 			if (-sig[j] > -sig[j + 1])
 			{
-				vpeak[i] = sig[j];
-				vpeak_time[i] = j;
-				vmid[i] = (vpeak[i] - vmin) / 2.0;
+				pulses.vpeak[i] = sig[j];
+				pulses.vpeak_time[i] = j;
+				pulses.vmid[i] = (pulses.vpeak[i] - vmin) / 2.0;
 
 				if (verbose)
 					cout << "vpeak =" << sig[j] << " time=" << j << endl;		  
@@ -435,22 +433,28 @@ void	tree::pulseFADC()
 	if (verbose)
 		cout << "Pulse timing: \n";
 
-	Int_t	FADC_time_coarse[MAX_NUM_PULSES] = {0, 0, 0, 0};
-	Int_t	FADC_time_fine[MAX_NUM_PULSES] = {0, 0, 0, 0};
+	pulses.time_coarse[0] = 0;
+	pulses.time_coarse[1] = 0;
+	pulses.time_coarse[2] = 0;
+	pulses.time_coarse[3] = 0;
+	pulses.time_fine[0] = 0;
+	pulses.time_fine[1] = 0;
+	pulses.time_fine[2] = 0;
+	pulses.time_fine[3] = 0;
 
-	for (Int_t i = 0; i < npulse; ++i)
+	for (Int_t i = 0; i < pulses.npulses; ++i)
 	{
 		if (verbose)
-			cout << "pulse #" << i + 1<< "\n";
+			cout << "pulse #" << i + 1 << "\n";
 
 		// finding the coarse and fine times
-		for (Int_t j = tc[i]; j < vpeak_time[i]; ++j)
+		for (Int_t j = pulses.tc[i]; j < pulses.vpeak_time[i]; ++j)
 		{
-			if (sig[j] >= vmid[i] && vmid[i] > sig[j + 1])
+			if (sig[j] >= pulses.vmid[i] && pulses.vmid[i] > sig[j + 1])
 			{
-				FADC_time_coarse[i] = j;
-				FADC_time_fine[i] = 64 * ((vmid[i] - sig[FADC_time_coarse[i]]) /
-										 ((sig[FADC_time_coarse[i] + 1]) - sig[FADC_time_coarse[i]]));
+				pulses.time_coarse[i] = j;
+				pulses.time_fine[i] = 64 * ((pulses.vmid[i] - sig[pulses.time_coarse[i]]) /
+										 ((sig[pulses.time_coarse[i] + 1]) - sig[pulses.time_coarse[i]]));
 				if (verbose)
 					cout << "coarse time is " << j << " with signal value =" << sig[j] << endl;
 			}
