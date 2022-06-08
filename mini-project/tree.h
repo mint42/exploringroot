@@ -30,16 +30,6 @@ class tree
 		Float_t		A2;
 		Float_t		t1;
 		Float_t		t2;
-		// outputs from signal processing
-		Float_t		start_time[4];
-		Float_t		stop_time[4];
-		Float_t		threshold = 400;
-
-//		Int_t	FADC_pulse_sum[4];
-//		Int_t	FADC_pulse_pedestal;
-//		Int_t	FADC_pulse_pedestal_good;
-		Int_t	FADC_time_coarse[4];
-		Int_t	FADC_time_fine[4];
 
 		// List of branches
 		TBranch		*b_si;   //!
