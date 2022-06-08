@@ -15,7 +15,7 @@
 #define PTW_MIN	10
 #define PTW_MAX	110
 // Threshold: a sample must be larger than this point to be considered a pulse
-#define TET		400
+#define TET		100
 // Number of samples considered in the pedestal.
 #define NPED	4
 // Number of Samples Above Threshold: minimum number required to be considered a pulse
@@ -28,21 +28,22 @@
 // 		it's different for each pulse and is used as a reference point for 
 // 		all these other variables.
 
-//    This is the loop skeleton where:
-//   jentry is the global entry number in the chain
-//   ientry is the entry number in the current Tree
-// Note that the argument to GetEntry must be:
-//   jentry for TChain::GetEntry
-//   ientry for TTree::GetEntry and TBranch::GetEntry
-//
-//      To read only selected branches, Insert statements like:
-//METHOD1:
-//   fChain->SetBranchStatus("*",0);  // disable all branches
-//   fChain->SetBranchStatus("branchname",1);  // activate branchname
-//METHOD2: replace line
-//   fChain->GetEntry(jentry);       //read all branches
-//   b_branchname->GetEntry(ientry); //read only this branch
-
+/*
+ *     This is the loop skeleton where:
+ *    jentry is the global entry number in the chain
+ *    ientry is the entry number in the current Tree
+ *  Note that the argument to GetEntry must be:
+ *    jentry for TChain::GetEntry
+ *    ientry for TTree::GetEntry and TBranch::GetEntry
+ * 
+ *       To read only selected branches, Insert statements like:
+ * METHOD1:
+ *    fChain->SetBranchStatus("*",0);  // disable all branches
+ *    fChain->SetBranchStatus("branchname",1);  // activate branchname
+ * METHOD2: replace line
+ *    fChain->GetEntry(jentry);       //read all branches
+ *    b_branchname->GetEntry(ientry); //read only this branch
+ */
 
 /*
  * @param: pulse_display	option to pick which multigraphs to show.
@@ -102,6 +103,8 @@ void	tree::Loop(Int_t pulse_display = -1) {
 		if (jentry > 1000 && jentry < 5000)
 			pulseFADC();
 
+		if (pulse_display == 0 || pulse_display == 1 || pulse_display == 2 || pulse_display == 3)
+		{
 		if (A1 == 0 && noPulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && display_no_pulse)
 		{	 
 			cout << "No Pulse Event #: " << jentry << endl;
@@ -196,7 +199,10 @@ void	tree::Loop(Int_t pulse_display = -1) {
 				++twoPulse_counter;
 			}
 		}
+		}
 	}
+
+	if (pulse_display == 0 || pulse_display == 1 || pulse_display == 2 || pulse_display == 3) {
 
 	if (display_no_pulse) // if display_no_pulse is set to TRUE
 	{
@@ -235,6 +241,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 			multigraph_twopulse[i]->Draw("ACP");
 		}
 		multipleTwoPulsePlots->Print("multipleTwoPulsePlots.pdf");
+	}
 	}
 
 	return;
@@ -297,8 +304,9 @@ void	tree::pulseFADC()
 	for (Int_t i = PTW_MIN; i < PTW_MAX; ++i)
 	{
 		// when the signal goes over the threshold
-		if (-sig[i] >= TET && tc[npulse] == TOTAL_NSAMPLES)	     
+		if (-sig[i] >= TET)
 		{
+			cout << "OVER\n";
 			tc[npulse] = i;
 
 			// loop until the signal goes back under the threshold
@@ -344,7 +352,11 @@ void	tree::pulseFADC()
 	Int_t	FADC_pulse_pedestal = 0;
 
 	if (tc[0] < NPED) // checks if threshold is crossed in the pedestal range
+	{
+		cout << "bad pedestal\n";
 		FADC_pulse_pedestal_good = kFALSE;
+		return ;
+	}
 
 	for (Int_t i = 0; i < NPED; ++i)
 		FADC_pulse_pedestal += sig[i];
@@ -353,11 +365,7 @@ void	tree::pulseFADC()
 	{
 		cout << "Pedestal evaluation \n";
 		cout << "pedestal =" << FADC_pulse_pedestal << "\n";
-
-		if (FADC_pulse_pedestal_good)
-			cout << "good pedestal\n";
-		else
-			cout << "bad pedestal\n";
+		cout << "good pedestal!\n";
 	}
 
 	if (verbose)
@@ -374,7 +382,7 @@ void	tree::pulseFADC()
 	for (Int_t i = 0; i < npulse; ++i)
 	{
 		if (verbose)
-			cout << "pulse #" << i << "\n";
+			cout << "pulse #" << i + 1<< "\n";
 
 		pulse_duration_start = std::max(tc[i] - NSB, 1);
 		pulse_duration_stop = std::min(tc[i] + NSA - 1, PTW_MAX);
@@ -383,7 +391,7 @@ void	tree::pulseFADC()
 		{
 			if (verbose)
 				cout << j << ":" << sig[j] << " , ";
-			FADC_pulse_sum[i] += sig[j];
+			FADC_pulse_sum[i] += abs(sig[j]);
 		}
 		if (verbose)
 			cout << "integral =" << FADC_pulse_sum[i]<<"\n";
@@ -405,16 +413,16 @@ void	tree::pulseFADC()
 
 	for (Int_t i = 0; i < npulse; ++i)
 	{
-		for (Int_t j = tc[npulse]; j < PTW_MAX; ++j)
+		for (Int_t j = tc[i]; j < PTW_MAX; ++j)
 		{
-			if (sig[j] > sig[j + 1])
+			if (-sig[j] > -sig[j + 1])
 			{
-				vpeak[npulse] = sig[i];
-				vpeak_time[npulse] = i;
-				vmid[npulse] = (vpeak[npulse] + vmin) / 2.0;
+				vpeak[i] = sig[j];
+				vpeak_time[i] = j;
+				vmid[i] = (vpeak[i] - vmin) / 2.0;
 
 				if (verbose)
-					cout << "vpeak =" << vpeak << " bin=" << j << endl;		  
+					cout << "vpeak =" << sig[j] << " time=" << j << endl;		  
 				break ;
 			}
 		}
@@ -422,7 +430,6 @@ void	tree::pulseFADC()
 
 	if (verbose)
 		cout << endl << endl;
-
 
 	// find the pulse timings
 	if (verbose)
@@ -434,12 +441,12 @@ void	tree::pulseFADC()
 	for (Int_t i = 0; i < npulse; ++i)
 	{
 		if (verbose)
-			cout << "pulse #" << i << "\n counting bins";
+			cout << "pulse #" << i + 1<< "\n";
 
 		// finding the coarse and fine times
 		for (Int_t j = tc[i]; j < vpeak_time[i]; ++j)
 		{
-			if (sig[j] <= vmid[i] && vmid[i] < sig[j + 1])
+			if (sig[j] >= vmid[i] && vmid[i] > sig[j + 1])
 			{
 				FADC_time_coarse[i] = j;
 				FADC_time_fine[i] = 64 * ((vmid[i] - sig[FADC_time_coarse[i]]) /
