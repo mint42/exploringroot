@@ -30,10 +30,13 @@ to set up the class.
 Each of the following commands runs the main of the program and generates graphs of signals for the first 9 instances of 0, 1, or 2 valid pulses detected. Giving the Loop() method different parameters can limit the number of graphs generated.
 
 ```
-root> t.Loop();       // Prints all multigraphs
+root> t.Loop(-1);     // Prints all multigraphs
 root> t.Loop(0);      // Prints no pulse multigraph
 root> t.Loop(1);      // Prints one pulse multigraph
 root> t.Loop(2);      // Prints two pulse multigraph
+root> t.Loop(3);      // Prints three pulse multigraph
+root> t.Loop(4);      // Prints four pulse multigraph
+root> t.Loop(5);      // Prints a threshold vs npulses dectected graph
 ```
 
 Here are a few other examples of commands that can be run on the t object. To see all the options, check out [tree.h](./tree.h)
