@@ -7,7 +7,7 @@
 #include <TCanvas.h>
 #include <vector>
 
-#define MAX_NUM_GRAPHS 9			// number of graphs to be drawn from each category (no pulse, 1 pulse, 2 pulse)
+#define MAX_NUM_GRAPHS 9 // number of graphs to be drawn from each category (no pulse, 1 pulse, 2 pulse)
 
 /*
  *     This is the loop skeleton where:
@@ -30,12 +30,16 @@
  * @param: pulse_display	option to pick which multigraphs to show.
  * 							-1 is sent by default
  *
+ * 							= -1		display all
  * 							=  0		only show the 0 pulse instances
  * 							=  1		only show the 1 pulse instances
  * 							=  2		only show the 2 pulse instances
- * 							!= 0,1,2	display all graphs
+ * 							=  3		only show the 2 pulse instances
+ * 							=  4		only show the 2 pulse instances
  *
  */
+
+	Int_t	match = 0;
 
 void	tree::Loop(Int_t pulse_display = -1) {
 	if (fChain == 0)
@@ -46,39 +50,50 @@ void	tree::Loop(Int_t pulse_display = -1) {
 
 	Long64_t		nentries = fChain->GetEntriesFast();
 
-	// counters keep track of how many events of each type are found. each will
-	// stop at MAX_NUM_GRAPHS (9) since the program only cares to graph those first 
-	// few instances
-	Int_t	noPulse_counter = 0;
-	Int_t	onePulse_counter = 0;
-	Int_t	twoPulse_counter = 0;
-
 	// declaration of multigraph, no pulse plots, and offset line 
 	TMultiGraph	*multigraph_nopulse[MAX_NUM_GRAPHS];
 	TGraph		*graph_nopulse[MAX_NUM_GRAPHS];
 	TGraph		*noPulse_offset_line[MAX_NUM_GRAPHS];
 
-	// declaration of multigraph, one pulse plots, point of pulse, and offset line
+	// declaration of multigraph, one pulse plots, point of pulse, and threshold line
 	TMultiGraph	*multigraph_onepulse[MAX_NUM_GRAPHS];
 	TGraph		*graph_onepulse[MAX_NUM_GRAPHS];
 //	TGraph		*graph_onepulse_dot[MAX_NUM_GRAPHS];
 	TGraph		*onePulse_threshold_line[MAX_NUM_GRAPHS];
 
-	// declaration of multigraph, two pulse plots, points of pulses, and offset line 
+	// declaration of multigraph, two pulse plots, points of pulses, and threshold line
 	TMultiGraph	*multigraph_twopulse[MAX_NUM_GRAPHS];
 	TGraph		*graph_twopulse[MAX_NUM_GRAPHS];
 //	TGraph		*graph_twopulse_dot1[MAX_NUM_GRAPHS];
 //	TGraph		*graph_twopulse_dot2[MAX_NUM_GRAPHS];
 	TGraph		*twoPulse_offset_line[MAX_NUM_GRAPHS];
 
+	// declaration of multigraph, three plots
+	TMultiGraph	*multigraph_threepulse[MAX_NUM_GRAPHS];
+	TGraph		*graph_threepulse[MAX_NUM_GRAPHS];
+	TGraph		*threePulse_offset_line[MAX_NUM_GRAPHS];
+
+	// declaration of multigraph, four plots
+	TMultiGraph	*multigraph_fourpulse[MAX_NUM_GRAPHS];
+	TGraph		*graph_fourpulse[MAX_NUM_GRAPHS];
+	TGraph		*fourPulse_offset_line[MAX_NUM_GRAPHS];
+
 	// uses pulse_display variable to set display options
-	Bool_t		display_no_pulse  = (pulse_display != 1 && pulse_display != 2) ? kTRUE : kFALSE;
-	Bool_t		display_one_pulse = (pulse_display != 0 && pulse_display != 2) ? kTRUE : kFALSE;
-	Bool_t		display_two_pulse = (pulse_display != 0 && pulse_display != 1) ? kTRUE : kFALSE;
+	Bool_t		display_no_pulse  = (pulse_display == 0 || pulse_display == -1) ? kTRUE : kFALSE;
+	Bool_t		display_one_pulse = (pulse_display == 1 || pulse_display == -1) ? kTRUE : kFALSE;
+	Bool_t		display_two_pulse = (pulse_display == 2 || pulse_display == -1) ? kTRUE : kFALSE;
+	Bool_t		display_three_pulse = (pulse_display == 3 || pulse_display == -1) ? kTRUE : kFALSE;
+	Bool_t		display_four_pulse = (pulse_display == 4 || pulse_display == -1) ? kTRUE : kFALSE;
 
 	// for algorithm processing
 	struct fadc	pulses;
-	Int_t		n_events_pulses[MAX_NUM_PULSES + 1] = {0, 0, 0, 0, 0};
+	Int_t	nbadped = 0;
+
+	Int_t	noPulse_counter = 0;
+	Int_t	onePulse_counter = 0;
+	Int_t	twoPulse_counter = 0;
+	Int_t	threePulse_counter = 0;
+	Int_t	fourPulse_counter = 0;
 
 	// main loop. this loops over all the events in the tree.
 	for (Long64_t jentry = 0; jentry < nentries; ++jentry)
@@ -86,54 +101,59 @@ void	tree::Loop(Int_t pulse_display = -1) {
 		fChain->GetEntry(jentry);
 
 		pulseFADC(pulses, sig);
+		if (pulses.pedestal_good == kFALSE)
+			++nbadped;
+
 		if (pulses.npulses == 0)
-			++n_events_pulses[0];
-		else if (pulses.npulses == 1)
-			++n_events_pulses[1];
-		else if (pulses.npulses == 2)
-			++n_events_pulses[2];
-		else if (pulses.npulses == 3)
-			++n_events_pulses[3];
-		else if (pulses.npulses == 4)
-			++n_events_pulses[4];
+		{
+			if (noPulse_counter < MAX_NUM_GRAPHS &&  display_no_pulse)
+			{	 
+				cout << endl << "Event: #" << jentry << " No pulse" << endl
+					 << "A1: " << A1 << "   |   "
+					 << "A2: " << A2 << "   |   "
+					 << "T1: " << t1 << "   |   "
+					 << "T2: " << t2 << endl;
 
-		if (A1 == 0 && noPulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && display_no_pulse)
-		{	 
-			cout << "No Pulse Event #: " << jentry << endl;
-			TString		title_nopulse = Form("Event # %lld", jentry); // title form
+				TString		title_nopulse = Form("Event # %lld", jentry); // title form
 
-			multigraph_nopulse[noPulse_counter] = new TMultiGraph(title_nopulse, title_nopulse); // initialize multigraph
-			graph_nopulse[noPulse_counter] = new TGraph(TOTAL_NSAMPLES, x, sig); // initialize plot of no pulses
+				multigraph_nopulse[noPulse_counter] = new TMultiGraph(title_nopulse, title_nopulse); // initialize multigraph
+				graph_nopulse[noPulse_counter] = new TGraph(TOTAL_NSAMPLES, x, sig); // initialize plot of no pulses
 
-			graph_nopulse[noPulse_counter]->SetLineColor(2);
-			multigraph_nopulse[noPulse_counter] -> Add(graph_nopulse[noPulse_counter]); // addition of plot to multigraph
+				graph_nopulse[noPulse_counter]->SetLineColor(2);
+				multigraph_nopulse[noPulse_counter] -> Add(graph_nopulse[noPulse_counter]); // addition of plot to multigraph
 
-			Double_t	plotX[2] = {0, TOTAL_NSAMPLES_FLOAT}; // x-coordinates to draw the offset line
-			Double_t	plotY[2] = {off, off}; // y-coordinates to draw the offset line
+				Double_t	plotX[2] = {0, TOTAL_NSAMPLES_FLOAT}; // x-coordinates to draw the offset line
+				Double_t	plotY[2] = {off, off}; // y-coordinates to draw the offset line
 
-			noPulse_offset_line[noPulse_counter] = new TGraph(2, plotX, plotY); // initialize new graph for offset line
+				noPulse_offset_line[noPulse_counter] = new TGraph(2, plotX, plotY); // initialize new graph for offset line
 
-			multigraph_nopulse[noPulse_counter]->Add(noPulse_offset_line[noPulse_counter], "L"); // addition of offset line to multigraph
-			multigraph_nopulse[noPulse_counter]->SetMinimum(-100); // lower bound of plot
-			multigraph_nopulse[noPulse_counter]->SetMaximum(50); // upper bound of plot
-
+				multigraph_nopulse[noPulse_counter]->Add(noPulse_offset_line[noPulse_counter], "L"); // addition of offset line to multigraph
+				multigraph_nopulse[noPulse_counter]->SetMinimum(-100); // lower bound of plot
+				multigraph_nopulse[noPulse_counter]->SetMaximum(50); // upper bound of plot
+			}
 			++noPulse_counter;
 		}
 
-		Float_t		start_array_detection[MAX_NUM_PULSES] = {TOTAL_NSAMPLES, TOTAL_NSAMPLES, TOTAL_NSAMPLES, TOTAL_NSAMPLES};
-		Float_t		stop_array_detection[MAX_NUM_PULSES] = {0, 0, 0, 0};
-
-		find_start_and_stop(sig, start_array_detection, stop_array_detection);
-
-		if (onePulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && display_one_pulse)
+		if (pulses.npulses == 1)
 		{
-			if (start_array_detection[0] < TOTAL_NSAMPLES &&
-				start_array_detection[1] == TOTAL_NSAMPLES &&
-				stop_array_detection[0] > 0 &&
-				stop_array_detection[1] == 0 &&
-				(stop_array_detection[0] - start_array_detection[0] >= 12))
+			if (onePulse_counter < MAX_NUM_GRAPHS && display_one_pulse)
 			{
-				cout << "One Pulse Event #: " << jentry << endl;
+				cout << endl << "Event: #" << jentry << " One pulse" << endl
+					 << "A1: " << A1 << "\t| "
+					 << "A2: " << A2 << endl
+					 << "T1: " << t1 << "\t| "
+					 << "T2: " << t2 << endl
+
+					 << endl
+
+					 << "1 peak volt: " << pulses.vpeak[0] << "\t| "
+					 << "2 peak volt: " << pulses.vpeak[1] << endl
+
+					 << "1 time cors: " << pulses.time_coarse[0] << "\t\t| "
+					 << "2 time cors: " << pulses.time_coarse[1] <<  endl
+
+					 << "1 time fine: " << fixed << setprecision(2) << pulses.time_fine[0] << "\t| "
+					 << "2 time fine: " << fixed << setprecision(2) << pulses.time_fine[1] << endl;
 
 				TString		title_onepulse = Form("Event # %lld",jentry); // title form
 
@@ -152,22 +172,34 @@ void	tree::Loop(Int_t pulse_display = -1) {
 
 				multigraph_onepulse[onePulse_counter]->SetMinimum(-2000);
 				multigraph_onepulse[onePulse_counter]->SetMaximum(200);
-
-				++onePulse_counter;
 			}
+			++onePulse_counter;
 		}
 
-		if (twoPulse_counter < MAX_NUM_GRAPHS && jentry > 1000 && display_two_pulse)
+		if (pulses.npulses == 2)
 		{
-			if ((start_array_detection[1] < TOTAL_NSAMPLES && stop_array_detection[1] > 0) &&
-			   ((stop_array_detection[0] - start_array_detection[0]) >= 8) &&
-			   ((stop_array_detection[1] - start_array_detection[1]) >= 2))
+			if (A1 && A2)
+				++match;
+			if (twoPulse_counter < MAX_NUM_GRAPHS && display_two_pulse)
 			{
-				cout << "Two Pulse Event #: " << jentry << endl;
-	//			cout << "First Start: " << start_array_detection[0] << endl;
-	//			cout << "Second Start: " << start_array_detection[1] << endl;
-	//			cout << "First Stop: " << stop_array_detection[0] << endl;
-	//			cout << "Second Stop: " << stop_array_detection[1] << endl;
+				cout << endl << "Event: #" << jentry << " Two pulses" << endl
+					 << "A1: " << A1 << "\t| "
+					 << "A2: " << A2 << endl
+					 << "T1: " << t1 << "\t| "
+					 << "T2: " << t2 << endl
+
+					 << endl
+
+					 << "1 peak volt: " << pulses.vpeak[0] << "\t| "
+					 << "2 peak volt: " << pulses.vpeak[1] << endl
+
+					 << "1 time cors: " << pulses.time_coarse[0] << "\t\t| "
+					 << "2 time cors: " << pulses.time_coarse[1] << endl
+
+					 << "1 time fine: " << fixed << setprecision(2) << pulses.time_fine[0] << "\t| "
+					 << "2 time fine: " << fixed << setprecision(2) << pulses.time_fine[1] << endl;
+					cout << "VPEAK: " << pulses.vpeak[0] << " VMID " << pulses.vmid[0] << endl;
+					cout << "VPEAK: " << pulses.vpeak[1] << " VMID " << pulses.vmid[1] << endl;
 
 				TString		title_twopulse = Form("Event # %lld", jentry);
 
@@ -181,22 +213,100 @@ void	tree::Loop(Int_t pulse_display = -1) {
 				graph_twopulse[twoPulse_counter] = new TGraph(TOTAL_NSAMPLES, x, sig);
 				graph_twopulse[twoPulse_counter]->SetLineColor(2);
 
-
 				multigraph_twopulse[twoPulse_counter]->Add(graph_twopulse[twoPulse_counter]);
 				multigraph_twopulse[twoPulse_counter]->Add(twoPulse_offset_line[twoPulse_counter], "L");
 				multigraph_twopulse[twoPulse_counter]->SetMinimum(-1600);
 				multigraph_twopulse[twoPulse_counter]->SetMaximum(200);
-
-				++twoPulse_counter;
 			}
+			++twoPulse_counter;
+		}
+
+		if (pulses.npulses == 3)
+		{
+			if (threePulse_counter < MAX_NUM_GRAPHS && display_three_pulse)
+			{
+				cout << endl << "Event: #" << jentry << " Three pulses" << endl
+					 << "1 peak volt: " << pulses.vpeak[0] << "\t| "
+					 << "2 peak volt: " << pulses.vpeak[1] << "\t| "
+					 << "3 peak volt: " << pulses.vpeak[2] << endl
+
+					 << "1 time cors: " << pulses.time_coarse[0] << "\t\t| "
+					 << "2 time cors: " << pulses.time_coarse[1] << "\t| "
+					 << "3 time cors: " << pulses.time_coarse[2] << endl
+
+					 << "1 time fine: " << fixed << setprecision(2) << pulses.time_fine[0] << "\t| "
+					 << "2 time fine: " << fixed << setprecision(2) << pulses.time_fine[1] << "\t| "
+					 << "3 time fine: " << fixed << setprecision(2) << pulses.time_fine[2] << endl;
+
+				TString		title_threepulse = Form("Event # %lld", jentry);
+
+				multigraph_threepulse[threePulse_counter] = new TMultiGraph(title_threepulse, title_threepulse);
+
+				Int_t		plotX[2] = {0, TOTAL_NSAMPLES};
+				Int_t		plotY[2] = {-TET, -TET};
+
+				threePulse_offset_line[threePulse_counter] = new TGraph(2, plotX, plotY);
+
+				graph_threepulse[threePulse_counter] = new TGraph(TOTAL_NSAMPLES, x, sig);
+				graph_threepulse[threePulse_counter]->SetLineColor(2);
+
+				multigraph_threepulse[threePulse_counter]->Add(graph_threepulse[threePulse_counter]);
+				multigraph_threepulse[threePulse_counter]->Add(threePulse_offset_line[threePulse_counter], "L");
+				multigraph_threepulse[threePulse_counter]->SetMinimum(-1600);
+				multigraph_threepulse[threePulse_counter]->SetMaximum(200);
+			}
+			++threePulse_counter;
+		}
+
+		if (pulses.npulses == 4)
+		{
+			if (fourPulse_counter < MAX_NUM_GRAPHS && display_four_pulse)
+			{
+				cout << endl << "Event: #" << jentry << " four pulses" << endl
+					 << "1 peak volt: " << pulses.vpeak[0] << "\t| "
+					 << "2 peak volt: " << pulses.vpeak[1] << "\t| "
+					 << "3 peak volt: " << pulses.vpeak[2] << "\t| "
+					 << "4 peak volt: " << pulses.vpeak[3] << endl
+
+					 << "1 time cors: " << pulses.time_coarse[0] << "\t\t| "
+					 << "2 time cors: " << pulses.time_coarse[1] << "\t| "
+					 << "3 time cors: " << pulses.time_coarse[2] << "\t| "
+					 << "4 time cors: " << pulses.time_coarse[3] << endl
+
+					 << "1 time fine: " << fixed << setprecision(2) << pulses.time_fine[0] << "\t| "
+					 << "2 time fine: " << fixed << setprecision(2) << pulses.time_fine[1] << "\t| "
+					 << "3 time fine: " << fixed << setprecision(2) << pulses.time_fine[2] << "\t| "
+					 << "4 time fine: " << fixed << setprecision(2) << pulses.time_fine[3] << endl;
+
+				TString		title_fourpulse = Form("Event # %lld", jentry);
+
+				multigraph_fourpulse[fourPulse_counter] = new TMultiGraph(title_fourpulse, title_fourpulse);
+
+				Int_t		plotX[2] = {0, TOTAL_NSAMPLES};
+				Int_t		plotY[2] = {-TET, -TET};
+
+				fourPulse_offset_line[fourPulse_counter] = new TGraph(2, plotX, plotY);
+
+				graph_fourpulse[fourPulse_counter] = new TGraph(TOTAL_NSAMPLES, x, sig);
+				graph_fourpulse[fourPulse_counter]->SetLineColor(2);
+
+				multigraph_fourpulse[fourPulse_counter]->Add(graph_fourpulse[fourPulse_counter]);
+				multigraph_fourpulse[fourPulse_counter]->Add(fourPulse_offset_line[fourPulse_counter], "L");
+				multigraph_fourpulse[fourPulse_counter]->SetMinimum(-1600);
+				multigraph_fourpulse[fourPulse_counter]->SetMaximum(200);
+			}
+			++fourPulse_counter;
 		}
 	}
 
-	cout << "# zero pulse events: " << n_events_pulses[0] << endl;
-	cout << "# one pulse events: " << n_events_pulses[1] << endl;
-	cout << "# two pulse events: " << n_events_pulses[2] << endl;
-	cout << "# three pulse events: " << n_events_pulses[3] << endl;
-	cout << "# four pulse events: " << n_events_pulses[4] << endl;
+	cout << endl << "NEW: \n";
+	cout << "# zero pulse events: " << noPulse_counter << endl;
+	cout << "# one pulse events: " << onePulse_counter << endl;
+	cout << "# two pulse events: " << twoPulse_counter << endl;
+	cout << "# three pulse events: " << threePulse_counter << endl;
+	cout << "# four pulse events: " << fourPulse_counter << endl;
+	cout << "# bad pedestal: " << nbadped << endl;
+	cout << "2 pulse events matched: " << match << endl;
 
 	if (display_no_pulse) // if display_no_pulse is set to TRUE
 	{
@@ -237,50 +347,41 @@ void	tree::Loop(Int_t pulse_display = -1) {
 		multipleTwoPulsePlots->Print("multipleTwoPulsePlots.pdf");
 	}
 
-	return;
-}
-
-// this function returns the start array
-void	tree::find_start_and_stop(Int_t sig[], Float_t tc[], Float_t stop_time[])
-{
-	for (Int_t i = 0; i < MAX_NUM_PULSES; ++i)
+	if (display_three_pulse) // if display_three_pulse is set to TRUE
 	{
-		tc[i] = TOTAL_NSAMPLES;
-		stop_time[i] = 0;
-	}
+		auto multipleTwoPulsePlots = new TCanvas("c3", "Entries for Two Pulse Plots");
+		multipleTwoPulsePlots->Divide(3, 3);
 
-	Int_t		npulse = 0;
-
-	for (Int_t i = 0; i < TOTAL_NSAMPLES; ++i)
-	{
-		if (-sig[i] >= TET && tc[npulse] == TOTAL_NSAMPLES)	     
-			tc[npulse] = i;	
-		if (-sig[i] <= TET && tc[npulse] != TOTAL_NSAMPLES && stop_time[npulse] == 0)
+		for (Int_t i = 0; i < MAX_NUM_GRAPHS; ++i)
 		{
-			stop_time[npulse] = i;
-			++npulse;
-			if (npulse == MAX_NUM_PULSES)
-				break;
+			multipleTwoPulsePlots->cd(i + 1);
+			multigraph_threepulse[i]->Draw("ACP");
 		}
+		multipleTwoPulsePlots->Print("multipleTwoPulsePlots.pdf");
 	}
+
+	if (display_four_pulse) // if display_four_pulse is set to TRUE
+	{
+		auto multipleTwoPulsePlots = new TCanvas("c3", "Entries for Two Pulse Plots");
+		multipleTwoPulsePlots->Divide(3, 3);
+
+		for (Int_t i = 0; i < MAX_NUM_GRAPHS; ++i)
+		{
+			multipleTwoPulsePlots->cd(i + 1);
+			multigraph_fourpulse[i]->Draw("ACP");
+		}
+		multipleTwoPulsePlots->Print("multipleTwoPulsePlots.pdf");
+	}
+
+	return;
 }
 
 void	pulseFADC(struct fadc &pulses, Int_t sig[])
 {
 	Bool_t	verbose = kFALSE;
 
-//	if (verbose)
-//	{
-//		for (Int_t i = 0; i < TOTAL_NSAMPLES; ++i)
-//			cout << i << ":" << sig[i] << " , ";
-//		cout << endl << endl;
-//	}
-
-	// finding the valid pulses
-	if (verbose)
-		cout << "Finding valid pulses: \n";
-
 	Int_t	npulse = 0; // keeps track of the # of pulses detected
+
 	pulses.tc[0] = 0;
 	pulses.tc[1] = 0;
 	pulses.tc[2] = 0;
@@ -298,14 +399,14 @@ void	pulseFADC(struct fadc &pulses, Int_t sig[])
 			while (-sig[i] >= TET && i < PTW_MAX)
 				++i;
 
-			if (verbose)
-				cout << "npulse =" << npulse << " pulse start=" << pulses.tc[npulse] << endl;
-
 			// check if the signal was over theshold for long enough
 			if (i - pulses.tc[npulse] >= NSAT)
 			{
 				if (verbose)
+				{
 					cout << " pulse long enough\n";
+					cout << "npulse =" << npulse << " pulse start=" << pulses.tc[npulse] << endl;
+				}
 				++npulse;
 			}
 			else
@@ -345,7 +446,7 @@ void	pulseFADC(struct fadc &pulses, Int_t sig[])
 	}
 
 	for (Int_t i = 0; i < NPED; ++i)
-		pulses.pedestal += sig[i];
+		pulses.pedestal += abs(sig[i]);
 
 	if (verbose)
 	{
@@ -371,12 +472,12 @@ void	pulseFADC(struct fadc &pulses, Int_t sig[])
 	for (Int_t i = 0; i < pulses.npulses; ++i)
 	{
 		if (verbose)
-			cout << "pulse #" << i + 1<< "\n";
+			cout << "pulse #" << i + 1 << "\n";
 
 		pulse_duration_start = std::max(pulses.tc[i] - NSB, 1);
 		pulse_duration_stop = std::min(pulses.tc[i] + NSA - 1, PTW_MAX);
 
-		for (Int_t j = pulse_duration_start; j < pulse_duration_stop; ++j)
+		for (Int_t j = pulse_duration_start; j <= pulse_duration_stop; ++j)
 		{
 			if (verbose)
 				cout << j << ":" << sig[j] << " , ";
@@ -390,7 +491,7 @@ void	pulseFADC(struct fadc &pulses, Int_t sig[])
 		cout << endl << endl;
 
 	// finding the average min voltage using with the first 4 signals
-	Int_t	vmin = (sig[0] + sig[1] + sig[2] + sig[3]) / 4;
+	Int_t	vmin = (abs(sig[0]) + abs(sig[1]) + abs(sig[2]) + abs(sig[3])) / 4;
 
 	// finding the pulse peaks
 	if (verbose)
@@ -426,6 +527,7 @@ void	pulseFADC(struct fadc &pulses, Int_t sig[])
 		}
 	}
 
+
 	if (verbose)
 		cout << endl << endl;
 
@@ -453,7 +555,7 @@ void	pulseFADC(struct fadc &pulses, Int_t sig[])
 			if (sig[j] >= pulses.vmid[i] && pulses.vmid[i] > sig[j + 1])
 			{
 				pulses.time_coarse[i] = j;
-				pulses.time_fine[i] = 64 * ((pulses.vmid[i] - sig[pulses.time_coarse[i]]) /
+				pulses.time_fine[i] = 64.0 * ((pulses.vmid[i] - sig[pulses.time_coarse[i]]) /
 										 ((sig[pulses.time_coarse[i] + 1]) - sig[pulses.time_coarse[i]]));
 				if (verbose)
 					cout << "coarse time is " << j << " with signal value =" << sig[j] << endl;
