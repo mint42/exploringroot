@@ -39,9 +39,8 @@
  *
  */
 
-	Int_t	match = 0;
-
-void	tree::Loop(Int_t pulse_display = -1) {
+void	tree::Loop(Int_t pulse_display = -1)
+{
 	if (fChain == 0)
 		return;
 
@@ -87,13 +86,31 @@ void	tree::Loop(Int_t pulse_display = -1) {
 
 	// for algorithm processing
 	struct fadc	pulses;
-	Int_t	nbadped = 0;
+	Int_t		nbadped = 0;
+	Int_t		match = 0;
+	Int_t		noPulse_counter = 0;
+	Int_t		onePulse_counter = 0;
+	Int_t		twoPulse_counter = 0;
+	Int_t		threePulse_counter = 0;
+	Int_t		fourPulse_counter = 0;
 
-	Int_t	noPulse_counter = 0;
-	Int_t	onePulse_counter = 0;
-	Int_t	twoPulse_counter = 0;
-	Int_t	threePulse_counter = 0;
-	Int_t	fourPulse_counter = 0;
+	Int_t		threshold_x_axis[14] = {0, 10, 20, 40, 60, 80, 100, 120, 140, 150, 160, 180, 200, 220};
+	Int_t		threshold_y_axis_0pulse[14];
+	Int_t		threshold_y_axis_1pulse[14];
+	Int_t		threshold_y_axis_2pulse[14];
+	Int_t		threshold_y_axis_3pulse[14];
+	Int_t		threshold_y_axis_4pulse[14];
+
+// making the threshold graph
+for (Int_t i = 0; i < 14; ++i)
+{
+pulses.threshold = threshold_x_axis[i];
+match = 0;
+noPulse_counter = 0;
+onePulse_counter = 0;
+twoPulse_counter = 0;
+threePulse_counter = 0;
+fourPulse_counter = 0;
 
 	// main loop. this loops over all the events in the tree.
 	for (Long64_t jentry = 0; jentry < nentries; ++jentry)
@@ -103,6 +120,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 		pulseFADC(pulses, sig);
 		if (pulses.pedestal_good == kFALSE)
 			++nbadped;
+
 
 		if (pulses.npulses == 0)
 		{
@@ -160,7 +178,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 				multigraph_onepulse[onePulse_counter] = new TMultiGraph(title_onepulse, title_onepulse); // initialize multigraph
 
 				Int_t		plotX[2] = {0, TOTAL_NSAMPLES};
-				Int_t		plotY[2] = {-TET, -TET}; // y-coordinates to draw the theshold line
+				Int_t		plotY[2] = {-pulses.threshold, -pulses.threshold}; // y-coordinates to draw the theshold line
 
 				onePulse_threshold_line[onePulse_counter] = new TGraph(2, plotX, plotY); 
 
@@ -206,7 +224,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 				multigraph_twopulse[twoPulse_counter] = new TMultiGraph(title_twopulse, title_twopulse);
 
 				Int_t		plotX[2] = {0, TOTAL_NSAMPLES};
-				Int_t		plotY[2] = {-TET, -TET};
+				Int_t		plotY[2] = {-pulses.threshold, -pulses.threshold};
 
 				twoPulse_offset_line[twoPulse_counter] = new TGraph(2, plotX, plotY);
 
@@ -243,7 +261,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 				multigraph_threepulse[threePulse_counter] = new TMultiGraph(title_threepulse, title_threepulse);
 
 				Int_t		plotX[2] = {0, TOTAL_NSAMPLES};
-				Int_t		plotY[2] = {-TET, -TET};
+				Int_t		plotY[2] = {-pulses.threshold, -pulses.threshold};
 
 				threePulse_offset_line[threePulse_counter] = new TGraph(2, plotX, plotY);
 
@@ -283,7 +301,7 @@ void	tree::Loop(Int_t pulse_display = -1) {
 				multigraph_fourpulse[fourPulse_counter] = new TMultiGraph(title_fourpulse, title_fourpulse);
 
 				Int_t		plotX[2] = {0, TOTAL_NSAMPLES};
-				Int_t		plotY[2] = {-TET, -TET};
+				Int_t		plotY[2] = {-pulses.threshold, -pulses.threshold};
 
 				fourPulse_offset_line[fourPulse_counter] = new TGraph(2, plotX, plotY);
 
@@ -299,14 +317,54 @@ void	tree::Loop(Int_t pulse_display = -1) {
 		}
 	}
 
-	cout << endl << "NEW: \n";
-	cout << "# zero pulse events: " << noPulse_counter << endl;
-	cout << "# one pulse events: " << onePulse_counter << endl;
-	cout << "# two pulse events: " << twoPulse_counter << endl;
-	cout << "# three pulse events: " << threePulse_counter << endl;
-	cout << "# four pulse events: " << fourPulse_counter << endl;
-	cout << "# bad pedestal: " << nbadped << endl;
-	cout << "2 pulse events matched: " << match << endl;
+threshold_y_axis_0pulse[i] = noPulse_counter;
+threshold_y_axis_1pulse[i] = onePulse_counter;
+threshold_y_axis_2pulse[i] = twoPulse_counter;
+threshold_y_axis_3pulse[i] = threePulse_counter;
+threshold_y_axis_4pulse[i] = fourPulse_counter;
+}
+
+TMultiGraph	*threshold_graphs = new TMultiGraph("thresholds", "thresholds");
+TGraph		*ind_graphs[5];
+
+ind_graphs[0] = new TGraph(14, threshold_x_axis, threshold_y_axis_0pulse);
+ind_graphs[0]->SetLineColor(1);
+ind_graphs[1] = new TGraph(14, threshold_x_axis, threshold_y_axis_1pulse);
+ind_graphs[1]->SetLineColor(2);
+ind_graphs[2] = new TGraph(14, threshold_x_axis, threshold_y_axis_2pulse);
+ind_graphs[2]->SetLineColor(3);
+ind_graphs[3] = new TGraph(14, threshold_x_axis, threshold_y_axis_3pulse);
+ind_graphs[3]->SetLineColor(4);
+ind_graphs[4] = new TGraph(14, threshold_x_axis, threshold_y_axis_4pulse);
+ind_graphs[4]->SetLineColor(5);
+
+threshold_graphs->Add(ind_graphs[0]);
+threshold_graphs->Add(ind_graphs[1]);
+threshold_graphs->Add(ind_graphs[2]);
+threshold_graphs->Add(ind_graphs[3]);
+threshold_graphs->Add(ind_graphs[4]);
+
+threshold_graphs->SetMinimum(0);
+threshold_graphs->SetMaximum(200000);
+
+threshold_graphs->Draw("ACP");
+threshold_graphs->Print("threshold_graph.pdf");
+
+cout << "0 Pulses: Black" << endl
+	 << "1 Pulses: Red" << endl
+	 << "2 Pulses: Green" << endl
+	 << "3 Pulses: Blue" << endl
+	 << "4 Pulses: Yellow" << endl;
+
+
+cout << endl << "NEW: \n";
+cout << "# zero pulse events: " << noPulse_counter << endl;
+cout << "# one pulse events: " << onePulse_counter << endl;
+cout << "# two pulse events: " << twoPulse_counter << endl;
+cout << "# three pulse events: " << threePulse_counter << endl;
+cout << "# four pulse events: " << fourPulse_counter << endl;
+cout << "# bad pedestal: " << nbadped << endl;
+cout << "2 pulse events matched: " << match << endl;
 
 	if (display_no_pulse) // if display_no_pulse is set to TRUE
 	{
@@ -390,13 +448,13 @@ void	pulseFADC(struct fadc &pulses, Int_t sig[])
 	for (Int_t i = PTW_MIN; i < PTW_MAX; ++i)
 	{
 		// when the signal goes over the threshold
-		if (-sig[i] >= TET)
+		if (-sig[i] >= pulses.threshold)
 		{
 			pulses.tc[npulse] = i;
 
 			// loop until the signal goes back under the threshold
 			++i;
-			while (-sig[i] >= TET && i < PTW_MAX)
+			while (-sig[i] >= pulses.threshold && i < PTW_MAX)
 				++i;
 
 			// check if the signal was over theshold for long enough

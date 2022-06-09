@@ -27,6 +27,7 @@
 
 struct	fadc
 {
+	Int_t	threshold; // needs a real variable for testing purposes
 	Int_t	pedestal;
 	Bool_t	pedestal_good;
 	Int_t	tc[MAX_NUM_PULSES];
