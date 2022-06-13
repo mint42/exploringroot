@@ -49,9 +49,13 @@ class tree
 		virtual Int_t		GetEntry(Long64_t entry);
 		virtual Long64_t	LoadTree(Long64_t entry);
 		virtual void		Init(TTree *tree);
-		virtual void		Loop(Int_t pulse_display);
 		virtual Bool_t		Notify();
 		virtual void		Show(Long64_t entry = -1);
+
+		void	display_pulses(Int_t pulse_display);
+		void	compare_times();
+		void	compare_height();
+		void	compare_threshold();
 };
 
 #endif

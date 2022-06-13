@@ -18,25 +18,46 @@ From the command line, first run:
 root tree2.root
 ```
 
-And then on the from the interactive shell, run:
+And then on the from the interactive shell, to set up a tree instance, run:
 
 ```
 root> .L tree.C
 root> tree t
 ```
 
-to set up the class.
+Here are some of the commands available to process the data:
 
-Each of the following commands runs the main of the program and generates graphs of signals for the first 9 instances of 0, 1, or 2 valid pulses detected. Giving the Loop() method different parameters can limit the number of graphs generated.
 
+display\_pulses() creates and displays a pdf with 9 graphs for the first 9 events
+that have [BLANK] number of pulses using the newly implemented algorithm.
 ```
-root> t.Loop(-1);     // Prints all multigraphs
-root> t.Loop(0);      // Prints no pulse multigraph
-root> t.Loop(1);      // Prints one pulse multigraph
-root> t.Loop(2);      // Prints two pulse multigraph
-root> t.Loop(3);      // Prints three pulse multigraph
-root> t.Loop(4);      // Prints four pulse multigraph
-root> t.Loop(5);      // Prints a threshold vs npulses dectected graph
+root> t.display_pulses(-1);    // all pulses
+root> t.display_pulses(0);     // no pulses
+root> t.display_pulses(1);     // one pulse
+root> t.display_pulses(2);     // two pulses 
+root> t.display_pulses(3);     // three pulses 
+root> t.display_pulses(4);     // four pulses 
+```
+
+compare\_threshold() creates and displays a pdf with a graph showing the number of 
+events where [BLANK] pulses were detected VS multiple threshold values using the newly 
+implemented algorithm
+```
+root> t.compare_threshold();
+```
+
+compare\_heights() creates and displays a graph showing the relationship between the 
+A1 value (pulse height) that comes from the old algorithm VS the integral of the 
+pulse from new algorithm
+```
+root> t.compare_heights();
+```
+
+compare\_times() creates and displays a graph showing the relationship between where 
+the old and new algorithms place the peak voltage when both algorithms detect only one 
+pulse during a given event.
+```
+root> t.compare_times();
 ```
 
 Here are a few other examples of commands that can be run on the t object. To see all the options, check out [tree.h](./tree.h)
