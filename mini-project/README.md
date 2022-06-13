@@ -28,8 +28,9 @@ root> tree t
 Here are some of the commands available to process the data:
 
 
-display\_pulses() creates and displays a pdf with 9 graphs for the first 9 events
-that have [BLANK] number of pulses using the newly implemented algorithm.
+display\_pulses() creates and displays a pdf with MAX\_NUM\_GRAPHS (9) graphs for the 
+first MAX\_NUM\_GRAPHS events that have [BLANK] number of pulses using the newly 
+implemented algorithm.
 ```
 root> t.display_pulses(-1);    // all pulses
 root> t.display_pulses(0);     // no pulses
