@@ -9,7 +9,7 @@
 #define PTW_MAX	110
 // Threshold: a sample must be larger than this point to be
 // considered a pulse
-#define TET		40
+#define TET		30
 // Number of samples considered in the pedestal.
 #define NPED	4
 // Number of Samples Above Threshold: minimum number required to be
@@ -32,6 +32,7 @@ struct	fadc
 	Bool_t	pedestal_good;
 	Int_t	tc[MAX_NUM_PULSES];
 	Int_t	integral[MAX_NUM_PULSES];
+	Int_t	adjusted_integral[MAX_NUM_PULSES];
 	Int_t	time_coarse[MAX_NUM_PULSES];
 	Float_t	time_fine[MAX_NUM_PULSES];
 	Int_t	vpeak[MAX_NUM_PULSES];
