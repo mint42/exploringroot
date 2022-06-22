@@ -1,6 +1,6 @@
 ## CALORIMETER DATA PROCESSING
 
-The goal of this project is to use some sample data taken from a collision where photons were being produced, and analyze those signals by loosely recreating an algorithm used in [Jeffereson Lab](https://www.jlab.org/)'s detectors. [Here](https://coda.jlab.org/drupal/system/files/pdfs/HardwareManual/fADC250/FADC250_Processing_FPGA_Firmware_ver_0x0C0D_Description_Instructions.pdf) is the documentation on that algorithm.
+The goal of this project is to use some sample data taken from a collision where photons were being produced, and analyze those signals by loosely recreating an algorithm used in [Jefferson Lab](https://www.jlab.org/)'s detectors. [Here](https://coda.jlab.org/drupal/system/files/pdfs/HardwareManual/fADC250/FADC250_Processing_FPGA_Firmware_ver_0x0C0D_Description_Instructions.pdf) is the documentation on that algorithm.
 
 This new algorithm will then be used to compare against the old algorithm for processing this data.
 
@@ -47,11 +47,11 @@ implemented algorithm
 root> t.compare_threshold();
 ```
 
-compare\_heights() creates and displays a graph showing the relationship between the 
+compare\_height() creates and displays a graph showing the relationship between the 
 A1 value (pulse height) that comes from the old algorithm VS the integral of the 
 pulse from new algorithm
 ```
-root> t.compare_heights();
+root> t.compare_height();
 ```
 
 compare\_times() creates and displays a graph showing the relationship between where 
